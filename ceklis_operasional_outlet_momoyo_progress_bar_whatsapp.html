@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ceklis Operasional Outlet MOMOYO - Progress Bar WhatsApp</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        wa: {
+                            primary: '#00a884',
+                            dark: '#008069',
+                            light: '#d9fdd3',
+                            bg: '#efeae2',
+                            teal: '#128c7e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Latar belakang pola halus khas ruang obrolan WhatsApp */
+        .wa-chat-bg {
+            background-color: #efeae2;
+            background-image: radial-gradient(#d1ccc0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        /* Scrollbar halus */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Animasi tab hijau menyala */
+        .progress-tab {
+            transition: background-color 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
+        }
+        .progress-tab-active {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 2px 6px -1px rgba(16, 185, 129, 0.45);
+        }
+        /* Sembunyikan scrollbar horizontal pada filter pill */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- =========================================================
+         LAYAR 1: HALAMAN LOGIN BERSIH (TANPA DAFTAR PASSWORD)
+    ========================================================== -->
+    <div id="loginScreen" class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-emerald-50 via-teal-50 to-slate-100">
+        <div class="w-full max-w-sm bg-white rounded-3xl shadow-xl border border-emerald-100 overflow-hidden">
+            <!-- Header Login -->
+            <div class="bg-wa-dark px-6 py-8 text-center text-white">
+                <div class="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center mx-auto mb-3.5 shadow-inner">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 11l3 3L22 4"></path>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-extrabold tracking-tight">Ceklis Operasional MOMOYO</h1>
+                <p class="text-xs text-emerald-100 mt-1">Sistem Ceklis Progress Bar WhatsApp</p>
+            </div>
+
+            <!-- Form Input PIN Akses Tunggal -->
+            <form id="loginForm" class="p-6 sm:p-7 space-y-5">
+                <div>
+                    <label for="loginPinInput" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 text-center">
+                        Masukkan PIN Akses
+                    </label>
+                    <div class="relative">
+                        <input type="password" id="loginPinInput" inputmode="numeric" maxlength="10" autocomplete="off" required
+                            placeholder="••••"
+                            class="w-full px-4 py-3.5 text-center text-2xl tracking-[0.45em] font-bold bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary transition-all">
+                    </div>
+                    <p id="loginErrorMsg" class="hidden text-xs font-semibold text-rose-600 mt-2.5 text-center">
+                        PIN tidak valid. Silakan coba lagi.
+                    </p>
+                </div>
+
+                <!-- Tombol Masuk -->
+                <button type="submit" id="btnLoginSubmit"
+                    class="w-full py-3.5 px-4 bg-wa-primary hover:bg-wa-dark text-white font-bold text-sm rounded-2xl shadow-md shadow-emerald-500/20 transition-all cursor-pointer flex items-center justify-center gap-2">
+                    <span>Masuk</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                </button>
+
+                <!-- Status Koneksi Real-Time -->
+                <div id="loginSyncStatus" class="text-[11px] text-center text-slate-400 flex items-center justify-center gap-1.5 pt-1">
+                    <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                    <span>Menghubungkan ke server real-time...</span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         LAYAR 2: APLIKASI UTAMA
+    ========================================================== -->
+    <div id="appScreen" class="hidden flex-1 flex flex-col">
+
+        <!-- Header Aplikasi -->
+        <header class="bg-wa-dark text-white shadow-sm sticky top-0 z-30">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2.5">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="bg-white/15 p-2 rounded-xl shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 sm:w-6 sm:h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 11l3 3L22 4"></path>
+                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                        </svg>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h1 id="headerMainTitle" class="text-sm sm:text-lg font-extrabold leading-tight truncate">Ceklis Progres WhatsApp</h1>
+                            <span id="syncBadge" class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-50 border border-emerald-300/30 shrink-0">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
+                                <span>Real-Time</span>
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-emerald-100 mt-0.5 truncate" id="headerRoleSubtitle">
+                            Operasional Outlet
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi Header -->
+                <div class="flex items-center gap-1.5 sm:gap-2">
+                    <span id="roleBadge" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold"></span>
+
+                    <!-- Tombol Reset Harian (Khusus Admin) -->
+                    <button id="btnHeaderResetMenu" type="button"
+                        class="hidden items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold bg-amber-400/20 hover:bg-amber-400/35 text-amber-50 border border-amber-300/30 rounded-xl transition-colors cursor-pointer"
+                        title="Reset centang harian">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 sm:w-4 sm:h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                            <path d="M3 3v5h5"></path>
+                        </svg>
+                        <span class="hidden md:inline">Reset Harian</span>
+                    </button>
+
+                    <!-- Tombol Pengaturan (Khusus Admin) -->
+                    <button id="btnOpenSettings" type="button"
+                        class="hidden items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold bg-white/15 hover:bg-white/25 text-white rounded-xl transition-colors cursor-pointer"
+                        title="Pengaturan Administrator">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <span class="hidden sm:inline">Pengaturan</span>
+                    </button>
+
+                    <!-- Tombol Keluar / Ganti Akun -->
+                    <button id="btnLogout" type="button"
+                        class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 text-xs font-semibold bg-white/10 hover:bg-rose-500/85 text-white rounded-xl transition-colors cursor-pointer"
+                        title="Keluar atau ganti akun">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        <span class="hidden sm:inline">Keluar / Ganti Akun</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Banner Indikator Khusus Sub-Akun Outlet -->
+        <div id="subAccountBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2">
+            <div class="max-w-7xl mx-auto flex items-center justify-center sm:justify-between gap-2 text-xs text-amber-900">
+                <div class="flex items-center gap-2 font-bold">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="18" height="11" x="3" y="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span id="subBannerLabel">Mode Outlet — Hanya Isi Ceklis & Kirim WhatsApp</span>
+                </div>
+                <span class="hidden sm:inline text-amber-700">Template tugas dikelola terpusat oleh Administrator.</span>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             STICKY RINGKAS: PROGRESS BAR TAB HIJAU UTAMA (10 SEGMEN)
+        ====================================================== -->
+        <div class="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-[56px] sm:top-[62px] z-20 shadow-xs">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span id="activeOutletChip" class="text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-600 text-white">
+                                OUTLET 2421 - MOMOYO ADHIKARYA
+                            </span>
+                            <span id="visualDateLabel" class="text-xs text-slate-500 font-medium hidden sm:inline"></span>
+                        </div>
+                        <h2 id="visualTitleHeading" class="text-sm sm:text-base font-extrabold text-slate-800 truncate mt-0.5">
+                            CEKLIS OPERASIONAL OUTLET MOMOYO
+                        </h2>
+                    </div>
+
+                    <div class="flex items-baseline gap-2.5 shrink-0">
+                        <span id="visualPercentBig" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight">0%</span>
+                        <span id="visualTaskCount" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            0/40 selesai
+                        </span>
+                    </div>
+                </div>
+
+                <!-- 10 Segmen Tab Hijau Utama -->
+                <div id="mainGreenTabsContainer" class="grid grid-cols-10 gap-1 sm:gap-1.5 w-full"></div>
+            </div>
+        </div>
+
+        <!-- Konten Utama -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 space-y-6">
+
+            <!-- =====================================================
+                 PANEL RINGKASAN & SWITCHER 5 OUTLET (KHUSUS ADMIN)
+            ====================================================== -->
+            <section id="adminOutletsOverview" class="hidden bg-white rounded-3xl shadow-sm border border-emerald-200/80 p-4 sm:p-5 space-y-3.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                        <h3 class="text-sm sm:text-base font-extrabold text-slate-800 flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span>Ringkasan Progres 5 Outlet (Real-Time)</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Klik kartu outlet untuk memantau detail ceklis, mereset centang, atau mengirim laporan WA.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="btnResetSelectedOutlet" type="button"
+                            class="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors cursor-pointer">
+                            Reset Outlet Ini
+                        </button>
+                        <button id="btnResetAllOutlets" type="button"
+                            class="px-3 py-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors cursor-pointer">
+                            Reset Semua 5 Outlet
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid 5 Kartu Outlet -->
+                <div id="outletSwitcherGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 sm:gap-3"></div>
+            </section>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-7 items-start">
+
+                <!-- =================================================
+                     KOLOM KIRI (7 KOLOM): KONTROL ADMIN & 4 KATEGORI CEKLIS
+                ================================================== -->
+                <div class="lg:col-span-7 space-y-5">
+
+                    <!-- Panel Input Custom Nama Checker (Bisa Diisi Admin & Sub-Akun) -->
+                    <section id="checkerNameCard" class="bg-white rounded-3xl shadow-sm border border-emerald-200/80 p-4 sm:p-5">
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <label for="inputCheckerName" class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span>Nama Checker</span>
+                            </label>
+                            <span id="checkerSaveStatus" class="text-[11px] font-semibold text-emerald-600">Tersimpan otomatis</span>
+                        </div>
+                        <input type="text" id="inputCheckerName" placeholder="Masukkan nama checker / PIC hari ini..."
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary transition-all">
+                    </section>
+
+                    <!-- Panel Edit Template Master (Khusus Admin) -->
+                    <section id="adminTopControls" class="hidden bg-white rounded-3xl shadow-sm border border-slate-200/80 p-4 sm:p-5 space-y-4">
+                        <div class="flex items-center justify-between gap-2 pb-1 border-b border-slate-100">
+                            <span class="text-xs font-extrabold uppercase tracking-wider text-emerald-700">Template Master (Berlaku ke Semua 5 Outlet)</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <div>
+                                <label for="inputTitle" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Judul Ceklis</label>
+                                <input type="text" id="inputTitle" placeholder="Contoh: CEKLIS OPERASIONAL OUTLET"
+                                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary transition-all">
+                            </div>
+                            <div>
+                                <label for="inputFooter" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">Catatan Bawah WA (Opsional)</label>
+                                <input type="text" id="inputFooter" placeholder="Contoh: Terima kasih atas kerja samanya!"
+                                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary transition-all">
+                            </div>
+                        </div>
+
+                        <!-- Form Tambah Kategori Baru -->
+                        <form id="formAddCategory" class="flex gap-2 pt-1 border-t border-slate-100">
+                            <input type="text" id="inputNewCategory" placeholder="Tambah kategori baru ke template master..."
+                                class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary transition-all">
+                            <button type="submit"
+                                class="px-4 py-2.5 bg-wa-primary hover:bg-wa-dark text-white font-bold text-xs sm:text-sm rounded-xl shadow-sm transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Kategori</span>
+                            </button>
+                        </form>
+                    </section>
+
+                    <!-- Filter Pill Kategori & Kontrol Accordion -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                        <div id="categoryFilterBar" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0"></div>
+
+                        <div class="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                            <button id="btnExpandAll" type="button"
+                                class="px-2.5 py-1.5 text-xs font-semibold text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors cursor-pointer">
+                                Buka Semua
+                            </button>
+                            <button id="btnCollapseAll" type="button"
+                                class="px-2.5 py-1.5 text-xs font-semibold text-slate-600 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl transition-colors cursor-pointer">
+                                Tutup Semua
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Kontainer Daftar Kartu Kategori -->
+                    <div id="categoriesContainer" class="space-y-4"></div>
+                </div>
+
+                <!-- =================================================
+                     KOLOM KANAN (5 KOLOM): PRATINJAU & KIRIM WHATSAPP
+                ================================================== -->
+                <div class="lg:col-span-5 lg:sticky lg:top-[185px] space-y-4">
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
+                        <!-- Header Pratinjau -->
+                        <div class="bg-wa-dark px-5 py-3.5 flex items-center justify-between text-white">
+                            <div class="flex items-center gap-2.5 min-w-0">
+                                <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-extrabold shrink-0">
+                                    WA
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="text-sm font-bold leading-tight truncate">Pratinjau Pesan WhatsApp</div>
+                                    <div id="previewOutletSub" class="text-[11px] text-emerald-100 truncate">OUTLET 2421 • Tab Hijau 🟩</div>
+                                </div>
+                            </div>
+                            <span id="previewPercentBadge" class="text-xs font-extrabold bg-white/20 px-2.5 py-1 rounded-full shrink-0">
+                                0%
+                            </span>
+                        </div>
+
+                        <!-- Dropdown Filter Kategori untuk Pesan WhatsApp -->
+                        <div class="px-4 py-3 bg-emerald-50/70 border-b border-emerald-100 flex flex-col sm:flex-row sm:items-center gap-2">
+                            <label for="waCategoryFilter" class="text-xs font-bold text-emerald-900 shrink-0 flex items-center gap-1.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                                </svg>
+                                <span>Kirim Laporan:</span>
+                            </label>
+                            <select id="waCategoryFilter"
+                                class="flex-1 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 bg-white border border-emerald-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-wa-primary/40 cursor-pointer">
+                                <option value="all">Semua Kategori</option>
+                            </select>
+                        </div>
+
+                        <!-- Area Gelembung Chat WhatsApp -->
+                        <div class="wa-chat-bg p-4 sm:p-5 max-h-[430px] overflow-y-auto custom-scrollbar">
+                            <div class="relative bg-wa-light text-slate-900 rounded-2xl rounded-tr-none p-4 shadow-sm max-w-full ml-auto w-full border border-emerald-200/70">
+                                <div id="waPreviewContent" class="text-[13px] sm:text-[13.5px] leading-relaxed whitespace-pre-wrap break-words font-sans"></div>
+
+                                <div class="flex items-center justify-end gap-1 mt-2 text-[11px] text-slate-500">
+                                    <span id="previewTime">10:00</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M18 6 7 17l-5-5"></path>
+                                        <path d="m22 10-7.5 7.5L13 16"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tombol Salin & Kirim WA -->
+                        <div class="p-4 bg-white border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            <button id="btnCopyText" type="button"
+                                class="w-full py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-sm rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                                    <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+                                </svg>
+                                <span>Salin Pesan</span>
+                            </button>
+
+                            <button id="btnSendWA" type="button"
+                                class="w-full py-3 px-4 bg-wa-primary hover:bg-wa-dark text-white font-bold text-sm rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="m22 2-7 20-4-9-9-4Z"></path>
+                                    <path d="M22 2 11 13"></path>
+                                </svg>
+                                <span>Kirim ke WhatsApp</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- =========================================================
+         MODAL PENGATURAN KHUSUS ADMINISTRATOR
+    ========================================================== -->
+    <div id="settingsModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full max-h-[92vh] overflow-y-auto custom-scrollbar p-6 shadow-2xl space-y-5">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-lg font-extrabold text-slate-800">Pengaturan Administrator</h3>
+                    <p class="text-xs text-slate-500">Kelola PIN Admin, 5 Akun Outlet, dan format pesan WhatsApp</p>
+                </div>
+                <button id="btnCloseSettings" type="button" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="settingsForm" class="space-y-5">
+                <!-- PIN Administrator -->
+                <div class="bg-emerald-50/60 border border-emerald-200/70 rounded-2xl p-4 space-y-2">
+                    <label for="inputAdminPin" class="block text-xs font-extrabold uppercase tracking-wider text-emerald-900">PIN Administrator</label>
+                    <div class="relative flex items-center">
+                        <input type="password" id="inputAdminPin" inputmode="numeric" maxlength="10" required
+                            class="w-full pl-3.5 pr-10 py-2.5 bg-white border border-emerald-200 rounded-xl text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary">
+                        <button type="button" id="btnToggleAdminPin" class="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700 cursor-pointer" title="Tampilkan / Sembunyikan PIN">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Kelola 5 Akun Outlet (Nama & PIN) -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500">Kelola 5 Akun Outlet (Sub-Akun)</label>
+                        <span class="text-[11px] text-slate-400">Setiap PIN harus unik</span>
+                    </div>
+                    <div id="settingsOutletsList" class="space-y-2"></div>
+                </div>
+
+                <!-- Skala Tab Hijau di Pesan WA -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Skala Tab Hijau di Pesan WhatsApp</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <button type="button" data-wa-scale="10" class="wa-scale-btn p-3 rounded-xl border-2 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-slate-800">10 Kotak Tetap</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">🟩🟩🟩🟩🟩⬜⬜⬜⬜⬜</div>
+                        </button>
+                        <button type="button" data-wa-scale="tasks" class="wa-scale-btn p-3 rounded-xl border-2 text-left transition-all cursor-pointer">
+                            <div class="text-xs font-bold text-slate-800">Sesuai Jumlah Tugas</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">1 kotak per tugas (maks 15/bar)</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Toggle Format Pesan WhatsApp -->
+                <div class="space-y-2.5">
+                    <label class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-3.5 cursor-pointer">
+                        <div>
+                            <div class="text-xs sm:text-sm font-bold text-slate-700">Tanggal Otomatis</div>
+                            <div class="text-[11px] text-slate-500">Sertakan hari & tanggal Indonesia di WA</div>
+                        </div>
+                        <div class="relative inline-flex items-center shrink-0">
+                            <input type="checkbox" id="settingAutoDate" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wa-primary"></div>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-3.5 cursor-pointer">
+                        <div>
+                            <div class="text-xs sm:text-sm font-bold text-slate-700">Efek Coret pada Tugas Selesai</div>
+                            <div class="text-[11px] text-slate-500">Gunakan format <code class="bg-slate-200 px-1 rounded">~teks~</code> di WhatsApp</div>
+                        </div>
+                        <div class="relative inline-flex items-center shrink-0">
+                            <input type="checkbox" id="settingStrikethrough" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wa-primary"></div>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl p-3.5 cursor-pointer">
+                        <div>
+                            <div class="text-xs sm:text-sm font-bold text-slate-700">Progress Bar per Kategori di WA</div>
+                            <div class="text-[11px] text-slate-500">Tampilkan bar 🟩⬜ di setiap judul kategori</div>
+                        </div>
+                        <div class="relative inline-flex items-center shrink-0">
+                            <input type="checkbox" id="settingCategoryBars" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wa-primary"></div>
+                        </div>
+                    </label>
+                </div>
+
+                <p id="settingsErrorMsg" class="hidden text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl p-3"></p>
+
+                <!-- Tombol Simpan Pengaturan -->
+                <div class="flex items-center justify-end gap-2.5 pt-1">
+                    <button id="btnCancelSettings" type="button" class="px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2.5 text-sm font-bold text-white bg-wa-primary hover:bg-wa-dark rounded-xl shadow-sm transition-colors cursor-pointer">
+                        Simpan Pengaturan
+                    </button>
+                </div>
+            </form>
+
+            <!-- Koneksi Server Real-Time untuk Hosting GitHub Pages -->
+            <div class="border-t border-slate-200 pt-4 space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <div class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Koneksi Server Real-Time (GitHub Pages)</div>
+                        <p class="text-[11px] text-slate-500 mt-0.5">Hubungkan 1 database cloud agar 5 HP outlet & Admin saling tersinkronisasi.</p>
+                    </div>
+                    <span id="settingsCloudStatusBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 shrink-0">
+                        Mode Lokal
+                    </span>
+                </div>
+
+                <div>
+                    <textarea id="inputCloudConfigJson" rows="4"
+                        placeholder='Tempel konfigurasi server di sini (contoh: { apiKey: "...", authDomain: "...", projectId: "..." })'
+                        class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary"></textarea>
+                    <p id="cloudConfigFeedback" class="hidden text-xs font-semibold mt-1.5"></p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button id="btnSaveCloudConfig" type="button"
+                        class="py-2.5 px-3.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2v4"></path>
+                            <path d="m16.2 7.8 2.9-2.9"></path>
+                            <path d="M18 12h4"></path>
+                            <path d="m16.2 16.2 2.9 2.9"></path>
+                            <path d="M12 18v4"></path>
+                            <path d="m4.9 19.1 2.9-2.9"></path>
+                            <path d="M2 12h4"></path>
+                            <path d="m4.9 4.9 2.9 2.9"></path>
+                        </svg>
+                        <span>Hubungkan Server</span>
+                    </button>
+
+                    <button id="btnDownloadGitHubHtml" type="button"
+                        class="py-2.5 px-3.5 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        <span>Unduh index.html Siap GitHub</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button id="btnCopyOutletShareLink" type="button"
+                        class="py-2 px-3 text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition-colors cursor-pointer">
+                        Salin Link Terhubung untuk 5 Outlet
+                    </button>
+                    <button id="btnClearCloudConfig" type="button"
+                        class="py-2 px-3 text-[11px] font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-xl transition-colors cursor-pointer">
+                        Reset Koneksi Server
+                    </button>
+                </div>
+            </div>
+
+            <!-- Zona Pemeliharaan Template -->
+            <div class="border-t border-slate-200 pt-4 space-y-2.5">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Pemeliharaan Template Master</div>
+                <button id="btnModalRestoreDefaults" type="button"
+                    class="w-full py-2.5 px-3.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"></path>
+                        <path d="M16 16h5v5"></path>
+                    </svg>
+                    <span>Kembalikan 4 Kategori & 40 Item Bawaan</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL PILIHAN RESET HARIAN (KHUSUS ADMIN)
+    ========================================================== -->
+    <div id="resetMenuModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-extrabold text-slate-800">Reset Centang Harian</h3>
+                <button id="btnCloseResetMenu" type="button" class="p-1 text-slate-400 hover:text-slate-700 rounded-lg cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500">Pilih cakupan reset status centang untuk memulai hari baru:</p>
+            <div class="space-y-2.5">
+                <button id="btnMenuResetCurrent" type="button"
+                    class="w-full py-3 px-4 text-left bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-2xl transition-colors cursor-pointer">
+                    <div class="text-sm font-bold text-amber-900" id="lblMenuResetCurrent">Reset Outlet Terpilih</div>
+                    <div class="text-[11px] text-amber-700 mt-0.5">Mengosongkan centang & Nama Checker outlet yang sedang dibuka</div>
+                </button>
+                <button id="btnMenuResetAll" type="button"
+                    class="w-full py-3 px-4 text-left bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-2xl transition-colors cursor-pointer">
+                    <div class="text-sm font-bold text-rose-800">Reset Semua 5 Outlet Sekaligus</div>
+                    <div class="text-[11px] text-rose-600 mt-0.5">Mengosongkan centang & Nama Checker seluruh 5 outlet ke 0%</div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         MODAL KONFIRMASI UNIVERSAL (PENGGANTI confirm())
+    ========================================================== -->
+    <div id="confirmModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <h3 id="confirmModalTitle" class="text-lg font-extrabold text-slate-800">Konfirmasi</h3>
+            <p id="confirmModalMessage" class="text-sm text-slate-600 leading-relaxed"></p>
+            <div class="flex items-center justify-end gap-2.5 pt-2">
+                <button id="btnConfirmCancel" type="button" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+                    Batal
+                </button>
+                <button id="btnConfirmProceed" type="button" class="px-4 py-2 text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors cursor-pointer">
+                    Ya, Lanjutkan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifikasi -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[70] pointer-events-none opacity-0 transition-all duration-300 translate-y-3">
+        <div class="bg-slate-900 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 whitespace-nowrap">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span id="toastMessage">Berhasil!</span>
+        </div>
+    </div>
+
+    <!-- =========================================================
+         SCRIPT UTAMA (FIREBASE REAL-TIME 5 OUTLET + LOGIKA)
+    ========================================================== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // =====================================================
+        // 1. DATA BAWAAN: 5 OUTLET MOMOYO & 4 KATEGORI (40 ITEM)
+        // =====================================================
+        const LOCAL_MASTER_KEY = 'momoyo_checklist_master_v2';
+        const LOCAL_PROGRESS_KEY = 'momoyo_checklist_progress_v2';
+        const LOCAL_CLOUD_CFG_KEY = 'momoyo_custom_cloud_cfg_v2';
+
+        /* __CLOUD_CONFIG_START__ */
+        const EMBEDDED_CLOUD_CONFIG = null;
+        /* __CLOUD_CONFIG_END__ */
+
+        function createDefaultOutlets() {
+            return [
+                { id: 'outlet_2421', name: 'OUTLET 2421 - MOMOYO ADHIKARYA', pin: '2421' },
+                { id: 'outlet_2109', name: 'OUTLET 2109 - MOMOYO TAMAN KOTA', pin: '2109' },
+                { id: 'outlet_2500', name: 'OUTLET 2500 - MOMOYO TELUK GONG', pin: '2500' },
+                { id: 'outlet_2625', name: 'OUTLET 2625 - MOMOYO CIPINANG MUARA', pin: '2625' },
+                { id: 'outlet_2563', name: 'OUTLET 2563 - MOMOYO GRAHA RAYA', pin: '2563' }
+            ];
+        }
+
+        function createDefaultCategories() {
+            return [
+                {
+                    id: 'cat_pagi',
+                    name: 'PAGI (OPENING)',
+                    tasks: [
+                        { id: 't_101', text: 'Karyawan shift pagi sudah masuk' },
+                        { id: 't_102', text: 'Outlet sudah dibuka (opening)' },
+                        { id: 't_103', text: 'Outlet sudah disapu dan dipel' },
+                        { id: 't_104', text: 'Status Online Food sudah "BUKA"' },
+                        { id: 't_105', text: 'PIP sudah siap' },
+                        { id: 't_106', text: 'Uang kasir shift pagi sudah disiapkan' },
+                        { id: 't_107', text: 'Mengisi stok awal display cup' },
+                        { id: 't_108', text: 'Tidak ada barang bahan baku di area customer' },
+                        { id: 't_109', text: 'Bahan baku urgent sudah request' },
+                        { id: 't_110', text: 'Bahan baku datang sudah dicek sesuai PL (jika ada pengiriman masuk)' },
+                        { id: 't_111', text: 'Bahan datang sudah dilaporkan di grup stok (jika ada pengiriman masuk)' }
+                    ]
+                },
+                {
+                    id: 'cat_middle',
+                    name: 'MIDDLE (OPERASIONAL & PERGANTIAN SHIFT)',
+                    tasks: [
+                        { id: 't_201', text: 'Pembagian tugas sudah jelas' },
+                        { id: 't_202', text: 'Kasir sudah melakukan upselling' },
+                        { id: 't_203', text: 'Pelanggan diarahkan mengisi review' },
+                        { id: 't_204', text: 'Memantau operasional' },
+                        { id: 't_205', text: 'Pergantian shift: kasir shift pagi menarik dan menghitung uang' },
+                        { id: 't_206', text: 'Karyawan absen sesuai jam masuk dan pulang' }
+                    ]
+                },
+                {
+                    id: 'cat_pelaporan',
+                    name: 'PELAPORAN',
+                    tasks: [
+                        { id: 't_301', text: 'Pelaporan salah buat: KEPALA TOKO harus melaporkan dan tidak boleh ditutup-tutupi' },
+                        { id: 't_302', text: 'Salah buat dilaporkan beserta penanggung jawab dan follow up dikemanakan nya' },
+                        { id: 't_303', text: 'Bahan baku yang terbuang sudah dilaporkan' },
+                        { id: 't_304', text: 'Laporan sisa batch sudah dikerjakan' },
+                        { id: 't_305', text: 'Laporan pemakaian bahan baku dan cup sudah dikerjakan' },
+                        { id: 't_306', text: 'Fuyin sudah diisi' },
+                        { id: 't_307', text: 'Laporan sisa token' },
+                        { id: 't_308', text: 'Laporan stok urgent' },
+                        { id: 't_309', text: 'Laporan pembelian dengan uang kasir (jika ada)' },
+                        { id: 't_310', text: 'Uang sudah dicek dan sudah diamankan' },
+                        { id: 't_311', text: 'Laporan kasir dan omset sudah dikerjakan' },
+                        { id: 't_312', text: 'Laporan foto area' },
+                        { id: 't_313', text: 'KIRIM foto POS, buku batch, buku cup, laporan kasir, settlement EDC' }
+                    ]
+                },
+                {
+                    id: 'cat_closing',
+                    name: 'CLOSING (Operasional, Kebersihan & Barang)',
+                    tasks: [
+                        { id: 't_401', text: 'Pengecekan bahan baku sesuai dengan PL' },
+                        { id: 't_402', text: 'Sisa bahan baku sudah disimpan dengan baik' },
+                        { id: 't_403', text: 'Barang di gudang sudah rapi dan ditata' },
+                        { id: 't_404', text: 'Packaging rijek sudah dilaporkan dan diamankan untuk dikembalikan ke kantor' },
+                        { id: 't_405', text: 'Dirigen, botol kosong, kardus dirapikan dan diamankan untuk dikembalikan' },
+                        { id: 't_406', text: 'Toilet sudah dibersihkan' },
+                        { id: 't_407', text: 'Cleaning peralatan dan area' },
+                        { id: 't_408', text: 'Sampah sudah dibuang' },
+                        { id: 't_409', text: 'Alat-alat, mesin es, AC, air, colokan sudah mati' },
+                        { id: 't_410', text: 'Outlet sudah dikunci (paling terakhir)' }
+                    ]
+                }
+            ];
+        }
+
+        function createDefaultMasterConfig() {
+            return {
+                title: 'CEKLIS OPERASIONAL OUTLET MOMOYO',
+                footer: '',
+                showDate: true,
+                strikethrough: false,
+                showCategoryBarsInWA: true,
+                waBarScale: '10',
+                adminPin: '1234',
+                outlets: createDefaultOutlets(),
+                categories: createDefaultCategories()
+            };
+        }
+
+        // =====================================================
+        // 2. STATE APLIKASI TERPUSAT & PROGRES PER OUTLET
+        // =====================================================
+        let masterData = createDefaultMasterConfig();
+        let outletChecksMap = {};
+        let outletCheckersMap = {};
+        masterData.outlets.forEach(o => {
+            outletChecksMap[o.id] = {};
+            outletCheckersMap[o.id] = '';
+        });
+
+        let currentRole = null;             // 'admin' | 'sub' | null
+        let loggedInOutletId = null;        // ID outlet jika login sebagai Sub-Akun
+        let activeOutletId = 'outlet_2421'; // Outlet yang sedang dilihat/diisi
+        let activeCategoryFilter = 'all';
+        let waSelectedCategory = 'all';
+        let collapsedCategories = new Set();
+        let tempWaBarScale = '10';
+        let pendingConfirmAction = null;
+
+        // Firebase References
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        let useCloudSync = false;
+        let appIdGlobal = 'default-app-id';
+        let masterDocRef = null;
+        let unsubscribeMaster = null;
+        let unsubscribeProgress = null;
+        let saveMasterTimer = null;
+        let saveCheckerTimer = null;
+        let toastTimeout = null;
+
+        // =====================================================
+        // 3. REFERENSI ELEMEN DOM
+        // =====================================================
+        const loginScreen = document.getElementById('loginScreen');
+        const appScreen = document.getElementById('appScreen');
+        const loginForm = document.getElementById('loginForm');
+        const loginPinInput = document.getElementById('loginPinInput');
+        const loginErrorMsg = document.getElementById('loginErrorMsg');
+        const loginSyncStatus = document.getElementById('loginSyncStatus');
+
+        const headerMainTitle = document.getElementById('headerMainTitle');
+        const headerRoleSubtitle = document.getElementById('headerRoleSubtitle');
+        const roleBadge = document.getElementById('roleBadge');
+        const syncBadge = document.getElementById('syncBadge');
+        const subAccountBanner = document.getElementById('subAccountBanner');
+        const subBannerLabel = document.getElementById('subBannerLabel');
+        const btnHeaderResetMenu = document.getElementById('btnHeaderResetMenu');
+        const btnOpenSettings = document.getElementById('btnOpenSettings');
+        const btnLogout = document.getElementById('btnLogout');
+
+        const activeOutletChip = document.getElementById('activeOutletChip');
+        const visualDateLabel = document.getElementById('visualDateLabel');
+        const visualTitleHeading = document.getElementById('visualTitleHeading');
+        const visualPercentBig = document.getElementById('visualPercentBig');
+        const visualTaskCount = document.getElementById('visualTaskCount');
+        const mainGreenTabsContainer = document.getElementById('mainGreenTabsContainer');
+
+        const adminOutletsOverview = document.getElementById('adminOutletsOverview');
+        const outletSwitcherGrid = document.getElementById('outletSwitcherGrid');
+        const btnResetSelectedOutlet = document.getElementById('btnResetSelectedOutlet');
+        const btnResetAllOutlets = document.getElementById('btnResetAllOutlets');
+
+        const inputCheckerName = document.getElementById('inputCheckerName');
+        const checkerSaveStatus = document.getElementById('checkerSaveStatus');
+
+        const adminTopControls = document.getElementById('adminTopControls');
+        const inputTitle = document.getElementById('inputTitle');
+        const inputFooter = document.getElementById('inputFooter');
+        const formAddCategory = document.getElementById('formAddCategory');
+        const inputNewCategory = document.getElementById('inputNewCategory');
+
+        const categoryFilterBar = document.getElementById('categoryFilterBar');
+        const btnExpandAll = document.getElementById('btnExpandAll');
+        const btnCollapseAll = document.getElementById('btnCollapseAll');
+        const categoriesContainer = document.getElementById('categoriesContainer');
+
+        const waCategoryFilter = document.getElementById('waCategoryFilter');
+        const waPreviewContent = document.getElementById('waPreviewContent');
+        const previewOutletSub = document.getElementById('previewOutletSub');
+        const previewPercentBadge = document.getElementById('previewPercentBadge');
+        const previewTime = document.getElementById('previewTime');
+        const btnCopyText = document.getElementById('btnCopyText');
+        const btnSendWA = document.getElementById('btnSendWA');
+
+        const settingsModal = document.getElementById('settingsModal');
+        const settingsForm = document.getElementById('settingsForm');
+        const btnCloseSettings = document.getElementById('btnCloseSettings');
+        const btnCancelSettings = document.getElementById('btnCancelSettings');
+        const inputAdminPin = document.getElementById('inputAdminPin');
+        const btnToggleAdminPin = document.getElementById('btnToggleAdminPin');
+        const settingsOutletsList = document.getElementById('settingsOutletsList');
+        const settingAutoDate = document.getElementById('settingAutoDate');
+        const settingStrikethrough = document.getElementById('settingStrikethrough');
+        const settingCategoryBars = document.getElementById('settingCategoryBars');
+        const settingsErrorMsg = document.getElementById('settingsErrorMsg');
+        const btnModalRestoreDefaults = document.getElementById('btnModalRestoreDefaults');
+
+        const settingsCloudStatusBadge = document.getElementById('settingsCloudStatusBadge');
+        const inputCloudConfigJson = document.getElementById('inputCloudConfigJson');
+        const cloudConfigFeedback = document.getElementById('cloudConfigFeedback');
+        const btnSaveCloudConfig = document.getElementById('btnSaveCloudConfig');
+        const btnDownloadGitHubHtml = document.getElementById('btnDownloadGitHubHtml');
+        const btnCopyOutletShareLink = document.getElementById('btnCopyOutletShareLink');
+        const btnClearCloudConfig = document.getElementById('btnClearCloudConfig');
+
+        const resetMenuModal = document.getElementById('resetMenuModal');
+        const btnCloseResetMenu = document.getElementById('btnCloseResetMenu');
+        const btnMenuResetCurrent = document.getElementById('btnMenuResetCurrent');
+        const lblMenuResetCurrent = document.getElementById('lblMenuResetCurrent');
+        const btnMenuResetAll = document.getElementById('btnMenuResetAll');
+
+        const confirmModal = document.getElementById('confirmModal');
+        const confirmModalTitle = document.getElementById('confirmModalTitle');
+        const confirmModalMessage = document.getElementById('confirmModalMessage');
+        const btnConfirmCancel = document.getElementById('btnConfirmCancel');
+        const btnConfirmProceed = document.getElementById('btnConfirmProceed');
+
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+
+        // =====================================================
+        // 4. UTILITAS PENYIMPANAN LOKAL (FALLBACK) & FIREBASE
+        // =====================================================
+        function loadFromLocalStorage() {
+            try {
+                const rawMaster = localStorage.getItem(LOCAL_MASTER_KEY);
+                if (rawMaster) {
+                    const parsed = JSON.parse(rawMaster);
+                    masterData = { ...createDefaultMasterConfig(), ...parsed };
+                    if (!Array.isArray(masterData.outlets) || masterData.outlets.length === 0) {
+                        masterData.outlets = createDefaultOutlets();
+                    }
+                    if (!Array.isArray(masterData.categories) || masterData.categories.length === 0) {
+                        masterData.categories = createDefaultCategories();
+                    }
+                }
+                const rawProg = localStorage.getItem(LOCAL_PROGRESS_KEY);
+                if (rawProg) {
+                    const parsedProg = JSON.parse(rawProg);
+                    outletChecksMap = parsedProg.checks || {};
+                    outletCheckersMap = parsedProg.checkers || {};
+                }
+            } catch (err) {
+                console.warn('Gagal membaca localStorage:', err);
+            }
+            ensureOutletMaps();
+        }
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem(LOCAL_MASTER_KEY, JSON.stringify(masterData));
+                localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify({
+                    checks: outletChecksMap,
+                    checkers: outletCheckersMap
+                }));
+            } catch (err) {
+                console.warn('Gagal menyimpan ke localStorage:', err);
+            }
+        }
+
+        function ensureOutletMaps() {
+            masterData.outlets.forEach(o => {
+                if (!outletChecksMap[o.id]) outletChecksMap[o.id] = {};
+                if (typeof outletCheckersMap[o.id] !== 'string') outletCheckersMap[o.id] = '';
+            });
+            if (!masterData.outlets.some(o => o.id === activeOutletId) && masterData.outlets.length > 0) {
+                activeOutletId = masterData.outlets[0].id;
+            }
+        }
+
+        function updateSyncStatusUI(isOnline, message) {
+            if (isOnline) {
+                loginSyncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-700 font-medium">${message}</span>`;
+                syncBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span><span>Real-Time</span>`;
+                if (settingsCloudStatusBadge) {
+                    settingsCloudStatusBadge.textContent = 'Terhubung Real-Time';
+                    settingsCloudStatusBadge.className = 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 shrink-0';
+                }
+            } else {
+                loginSyncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-sky-500"></span><span class="text-slate-500 font-medium">${message}</span>`;
+                syncBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-sky-300"></span><span>Mode Lokal</span>`;
+                if (settingsCloudStatusBadge) {
+                    settingsCloudStatusBadge.textContent = 'Mode Lokal';
+                    settingsCloudStatusBadge.className = 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 shrink-0';
+                }
+            }
+        }
+
+        // Mengekstrak & memvalidasi konfigurasi server dari teks JSON atau potongan kode JS
+        function parseCloudConfigInput(rawText) {
+            if (!rawText || typeof rawText !== 'string') return null;
+            const firstBrace = rawText.indexOf('{');
+            const lastBrace = rawText.lastIndexOf('}');
+            if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) return null;
+
+            let block = rawText.slice(firstBrace, lastBrace + 1);
+            try {
+                const parsed = JSON.parse(block);
+                if (parsed && parsed.apiKey && parsed.projectId) return parsed;
+            } catch (_) {
+                // Coba normalisasi object literal JavaScript (kunci tanpa tanda kutip / trailing comma)
+                try {
+                    const normalized = block
+                        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
+                        .replace(/'/g, '"')
+                        .replace(/,\s*}/g, '}');
+                    const parsed = JSON.parse(normalized);
+                    if (parsed && parsed.apiKey && parsed.projectId) return parsed;
+                } catch (err2) {
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        // Membaca konfigurasi server dari URL (#cfg=...), file tertanam, localStorage, atau environment
+        function resolveCloudConfig() {
+            // 1. Cek parameter hash URL (#cfg=...) agar link outlet langsung otomatis terhubung
+            try {
+                const hash = window.location.hash || '';
+                const match = hash.match(/cfg=([A-Za-z0-9+/=_-]+)/);
+                if (match && match[1]) {
+                    const b64 = match[1].replace(/-/g, '+').replace(/_/g, '/');
+                    const decoded = decodeURIComponent(escape(atob(b64)));
+                    const parsedHashCfg = JSON.parse(decoded);
+                    if (parsedHashCfg && parsedHashCfg.apiKey && parsedHashCfg.projectId) {
+                        localStorage.setItem(LOCAL_CLOUD_CFG_KEY, JSON.stringify(parsedHashCfg));
+                        history.replaceState(null, '', window.location.pathname + window.location.search);
+                        return { config: parsedHashCfg, isExternal: true };
+                    }
+                }
+            } catch (e) {
+                console.warn('Gagal membaca konfigurasi dari URL:', e);
+            }
+
+            // 2. Cek konfigurasi yang sudah tertanam di file index.html (untuk GitHub Pages)
+            if (EMBEDDED_CLOUD_CONFIG && EMBEDDED_CLOUD_CONFIG.apiKey && EMBEDDED_CLOUD_CONFIG.projectId) {
+                return { config: EMBEDDED_CLOUD_CONFIG, isExternal: true };
+            }
+
+            // 3. Cek konfigurasi yang disimpan Admin di browser
+            try {
+                const savedCfg = localStorage.getItem(LOCAL_CLOUD_CFG_KEY);
+                if (savedCfg) {
+                    const parsed = JSON.parse(savedCfg);
+                    if (parsed && parsed.apiKey && parsed.projectId) {
+                        return { config: parsed, isExternal: true };
+                    }
+                }
+            } catch (_) {}
+
+            // 4. Cek konfigurasi bawaan environment platform
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                return { config: JSON.parse(__firebase_config), isExternal: false };
+            }
+
+            return { config: null, isExternal: false };
+        }
+
+        async function initFirebase() {
+            loadFromLocalStorage();
+            if (unsubscribeMaster) { unsubscribeMaster(); unsubscribeMaster = null; }
+            if (unsubscribeProgress) { unsubscribeProgress(); unsubscribeProgress = null; }
+
+            try {
+                const resolved = resolveCloudConfig();
+                if (!resolved.config) {
+                    useCloudSync = false;
+                    updateSyncStatusUI(false, 'Siap digunakan (Penyimpanan Lokal)');
+                    return;
+                }
+
+                const firebaseConfig = resolved.config;
+                appIdGlobal = resolved.isExternal
+                    ? (firebaseConfig.projectId || 'momoyo-github-app')
+                    : (typeof __app_id !== 'undefined' ? __app_id : 'default-app-id');
+
+                const appName = resolved.isExternal ? 'momoyo_external_' + appIdGlobal : '[DEFAULT]';
+                const app = initializeApp(firebaseConfig, appName);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                if (!resolved.isExternal && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
+                    currentUser = cred.user;
+                } else {
+                    try {
+                        const cred = await signInAnonymously(auth);
+                        currentUser = cred.user;
+                    } catch (authErr) {
+                        if (!resolved.isExternal) throw authErr;
+                        console.warn('Lanjut sinkronisasi database:', authErr);
+                    }
+                }
+
+                useCloudSync = true;
+
+                // 1) Listener dokumen master (template + 5 outlet MOMOYO + PIN)
+                masterDocRef = doc(db, 'artifacts', appIdGlobal, 'public', 'data', 'momoyo_checklist_v2', 'master_config');
+                unsubscribeMaster = onSnapshot(masterDocRef, async (snap) => {
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        masterData = {
+                            ...createDefaultMasterConfig(),
+                            ...data,
+                            outlets: Array.isArray(data.outlets) && data.outlets.length ? data.outlets : createDefaultOutlets(),
+                            categories: Array.isArray(data.categories) ? data.categories : createDefaultCategories()
+                        };
+                        ensureOutletMaps();
+                        saveToLocalStorage();
+                    } else {
+                        await setDoc(masterDocRef, masterData);
+                    }
+                    updateSyncStatusUI(true, 'Terhubung ke server real-time');
+                    if (currentRole) renderAll();
+                }, (err) => {
+                    console.error('Error listener master:', err);
+                    useCloudSync = false;
+                    updateSyncStatusUI(false, 'Gagal terhubung ke server (Cek aturan akses)');
+                });
+
+                // 2) Listener koleksi progres masing-masing outlet
+                const progressColRef = collection(db, 'artifacts', appIdGlobal, 'public', 'data', 'momoyo_outlet_progress_v2');
+                unsubscribeProgress = onSnapshot(progressColRef, (querySnap) => {
+                    querySnap.forEach((docSnap) => {
+                        const oId = docSnap.id;
+                        const d = docSnap.data() || {};
+                        outletChecksMap[oId] = d.checks && typeof d.checks === 'object' ? d.checks : {};
+                        outletCheckersMap[oId] = typeof d.checkerName === 'string' ? d.checkerName : '';
+                    });
+                    saveToLocalStorage();
+                    if (currentRole) renderAll();
+                }, (err) => {
+                    console.error('Error listener progres outlet:', err);
+                });
+
+            } catch (error) {
+                console.warn('Fallback ke penyimpanan lokal:', error);
+                useCloudSync = false;
+                updateSyncStatusUI(false, 'Siap digunakan (Penyimpanan Lokal)');
+            }
+        }
+
+        // Simpan Master Config (debounced untuk ketikan, langsung untuk aksi tombol)
+        function saveMasterConfig(immediate = false) {
+            saveToLocalStorage();
+            if (!useCloudSync || !masterDocRef) return;
+
+            if (saveMasterTimer) clearTimeout(saveMasterTimer);
+            const execSave = async () => {
+                try {
+                    await setDoc(masterDocRef, { ...masterData, updatedAt: Date.now() }, { merge: true });
+                } catch (err) {
+                    console.error('Gagal menyimpan master ke cloud:', err);
+                }
+            };
+
+            if (immediate) {
+                execSave();
+            } else {
+                saveMasterTimer = setTimeout(execSave, 400);
+            }
+        }
+
+        // Simpan Progres (centang + nama checker) untuk satu outlet
+        async function saveOutletProgress(outletId) {
+            saveToLocalStorage();
+            if (!useCloudSync || !db) return;
+
+            try {
+                const progRef = doc(db, 'artifacts', appIdGlobal, 'public', 'data', 'momoyo_outlet_progress_v2', outletId);
+                await setDoc(progRef, {
+                    checks: outletChecksMap[outletId] || {},
+                    checkerName: outletCheckersMap[outletId] || '',
+                    updatedAt: Date.now()
+                }, { merge: true });
+            } catch (err) {
+                console.error('Gagal menyimpan progres outlet:', err);
+            }
+        }
+
+        // =====================================================
+        // 5. FUNGSI HELPER DATA, STATISTIK & TANGGAL
+        // =====================================================
+        function getOutletById(outletId) {
+            return masterData.outlets.find(o => o.id === outletId) || masterData.outlets[0];
+        }
+
+        function getChecksForOutlet(outletId) {
+            if (!outletChecksMap[outletId]) outletChecksMap[outletId] = {};
+            return outletChecksMap[outletId];
+        }
+
+        function isTaskDone(outletId, taskId) {
+            const checks = getChecksForOutlet(outletId);
+            return !!checks[taskId];
+        }
+
+        function getCheckerNameForOutlet(outletId) {
+            return (outletCheckersMap[outletId] || '').trim();
+        }
+
+        function getCategoryStats(outletId, category) {
+            const tasks = Array.isArray(category.tasks) ? category.tasks : [];
+            const total = tasks.length;
+            let done = 0;
+            for (const t of tasks) {
+                if (isTaskDone(outletId, t.id)) done++;
+            }
+            const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+            return { done, total, percent };
+        }
+
+        function getOverallStats(outletId) {
+            let total = 0;
+            let done = 0;
+            for (const cat of masterData.categories) {
+                const stats = getCategoryStats(outletId, cat);
+                total += stats.total;
+                done += stats.done;
+            }
+            const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+            return { done, total, percent };
+        }
+
+        function getFormattedDateID() {
+            const now = new Date();
+            return now.toLocaleDateString('id-ID', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+
+        function getCurrentTimeHM() {
+            const now = new Date();
+            return now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function buildGreenEmojiBar(done, total, scaleMode) {
+            if (total <= 0) return '⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜';
+            let slots = 10;
+            let filled = 0;
+            if (scaleMode === 'tasks') {
+                slots = Math.min(total, 15);
+                filled = Math.round((done / total) * slots);
+            } else {
+                slots = 10;
+                filled = Math.round((done / total) * 10);
+            }
+            filled = Math.max(0, Math.min(slots, filled));
+            return '🟩'.repeat(filled) + '⬜'.repeat(slots - filled);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function showToast(msg) {
+            toastMessage.textContent = msg;
+            toast.classList.remove('opacity-0', 'translate-y-3');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-3');
+                toast.classList.remove('opacity-100', 'translate-y-0');
+            }, 2600);
+        }
+
+        // =====================================================
+        // 6. AUTENTIKASI LOGIN (ADMIN & 5 OUTLET RAHASIA)
+        // =====================================================
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const enteredPin = loginPinInput.value.trim();
+            loginErrorMsg.classList.add('hidden');
+
+            if (!enteredPin) {
+                loginErrorMsg.textContent = 'Masukkan PIN terlebih dahulu.';
+                loginErrorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // Cek apakah PIN Administrator
+            if (enteredPin === String(masterData.adminPin)) {
+                currentRole = 'admin';
+                loggedInOutletId = null;
+                activeOutletId = masterData.outlets[0]?.id || 'outlet_2421';
+                enterApp();
+                showToast('Masuk sebagai Administrator');
+                return;
+            }
+
+            // Cek apakah cocok dengan salah satu dari 5 Outlet
+            const matchedOutlet = masterData.outlets.find(o => String(o.pin) === enteredPin);
+            if (matchedOutlet) {
+                currentRole = 'sub';
+                loggedInOutletId = matchedOutlet.id;
+                activeOutletId = matchedOutlet.id;
+                enterApp();
+                showToast(`Masuk ke ${matchedOutlet.name}`);
+                return;
+            }
+
+            // Jika tidak cocok
+            loginErrorMsg.textContent = 'PIN tidak valid. Silakan coba lagi.';
+            loginErrorMsg.classList.remove('hidden');
+            loginPinInput.value = '';
+            loginPinInput.focus();
+        }
+
+        function enterApp() {
+            loginPinInput.value = '';
+            loginErrorMsg.classList.add('hidden');
+            loginScreen.classList.add('hidden');
+            appScreen.classList.remove('hidden');
+            applyRoleVisibility();
+            renderAll();
+        }
+
+        function handleLogout() {
+            currentRole = null;
+            loggedInOutletId = null;
+            activeCategoryFilter = 'all';
+            waSelectedCategory = 'all';
+            appScreen.classList.add('hidden');
+            loginScreen.classList.remove('hidden');
+            loginPinInput.value = '';
+            setTimeout(() => loginPinInput.focus(), 100);
+        }
+
+        function applyRoleVisibility() {
+            const isAdmin = currentRole === 'admin';
+            const outlet = getOutletById(activeOutletId);
+
+            if (isAdmin) {
+                roleBadge.textContent = 'Administrator';
+                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-emerald-400/25 text-white border border-emerald-200/40';
+                headerRoleSubtitle.textContent = 'Kendali Penuh • 5 Outlet MOMOYO';
+                subAccountBanner.classList.add('hidden');
+                adminOutletsOverview.classList.remove('hidden');
+                adminTopControls.classList.remove('hidden');
+                btnHeaderResetMenu.classList.remove('hidden');
+                btnHeaderResetMenu.classList.add('flex');
+                btnOpenSettings.classList.remove('hidden');
+                btnOpenSettings.classList.add('flex');
+            } else {
+                roleBadge.textContent = 'Sub-Akun Outlet';
+                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-amber-400/25 text-amber-50 border border-amber-200/40';
+                headerRoleSubtitle.textContent = outlet ? outlet.name : 'Outlet MOMOYO';
+                subBannerLabel.textContent = `${outlet ? outlet.name : 'Outlet'} — Isi Nama Checker, Ceklis & Kirim WhatsApp`;
+                subAccountBanner.classList.remove('hidden');
+                adminOutletsOverview.classList.add('hidden');
+                adminTopControls.classList.add('hidden');
+                btnHeaderResetMenu.classList.add('hidden');
+                btnHeaderResetMenu.classList.remove('flex');
+                btnOpenSettings.classList.add('hidden');
+                btnOpenSettings.classList.remove('flex');
+            }
+        }
+
+        // =====================================================
+        // 7. RENDERING UI UTAMA
+        // =====================================================
+        function renderAll() {
+            ensureOutletMaps();
+            renderStickyHeaderProgress();
+            if (currentRole === 'admin') {
+                renderAdminOutletsOverview();
+                syncAdminMasterInputs();
+            }
+            syncCheckerInput();
+            renderCategoryFilterBar();
+            renderCategoriesList();
+            renderWACategoryDropdown();
+            renderWhatsAppPreview();
+        }
+
+        function renderStickyHeaderProgress() {
+            const outlet = getOutletById(activeOutletId);
+            const stats = getOverallStats(activeOutletId);
+
+            activeOutletChip.textContent = outlet ? outlet.name : 'OUTLET MOMOYO';
+            visualDateLabel.textContent = getFormattedDateID();
+            visualTitleHeading.textContent = masterData.title || 'CEKLIS OPERASIONAL OUTLET MOMOYO';
+            headerMainTitle.textContent = masterData.title || 'Ceklis Progres WhatsApp';
+            visualPercentBig.textContent = `${stats.percent}%`;
+            visualTaskCount.textContent = `${stats.done}/${stats.total} selesai`;
+
+            // Render 10 segmen tab hijau utama
+            const filledTabs = stats.total > 0 ? Math.round((stats.done / stats.total) * 10) : 0;
+            let tabsHtml = '';
+            for (let i = 0; i < 10; i++) {
+                const isActive = i < filledTabs;
+                tabsHtml += `<div class="progress-tab h-3 sm:h-3.5 rounded-md ${isActive ? 'progress-tab-active' : 'bg-slate-200/90'}"></div>`;
+            }
+            mainGreenTabsContainer.innerHTML = tabsHtml;
+        }
+
+        function renderAdminOutletsOverview() {
+            let html = '';
+            masterData.outlets.forEach((outlet) => {
+                const stats = getOverallStats(outlet.id);
+                const checker = getCheckerNameForOutlet(outlet.id);
+                const isSelected = outlet.id === activeOutletId;
+                const filledMini = stats.total > 0 ? Math.round((stats.done / stats.total) * 5) : 0;
+
+                let miniTabs = '';
+                for (let i = 0; i < 5; i++) {
+                    miniTabs += `<div class="h-1.5 rounded-sm ${i < filledMini ? 'bg-emerald-500' : 'bg-slate-200'}"></div>`;
+                }
+
+                html += `
+                    <button type="button" data-select-outlet="${outlet.id}"
+                        class="text-left p-3 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                            isSelected
+                                ? 'border-emerald-500 bg-emerald-50/70 shadow-sm'
+                                : 'border-slate-200/90 bg-slate-50/50 hover:border-emerald-300 hover:bg-white'
+                        }">
+                        <div class="flex items-start justify-between gap-1.5 w-full">
+                            <span class="text-[11px] font-extrabold leading-snug ${isSelected ? 'text-emerald-900' : 'text-slate-700'} line-clamp-2">
+                                ${escapeHtml(outlet.name)}
+                            </span>
+                            <span class="text-xs font-extrabold shrink-0 ${stats.percent === 100 ? 'text-emerald-600' : 'text-slate-600'}">
+                                ${stats.percent}%
+                            </span>
+                        </div>
+                        <div class="w-full space-y-1.5">
+                            <div class="grid grid-cols-5 gap-1">${miniTabs}</div>
+                            <div class="flex items-center justify-between text-[10px] text-slate-500">
+                                <span class="font-semibold">${stats.done}/${stats.total}</span>
+                                <span class="truncate max-w-[110px]" title="${escapeHtml(checker || 'Belum diisi')}">
+                                    👤 ${escapeHtml(checker || '-')}
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+                `;
+            });
+            outletSwitcherGrid.innerHTML = html;
+
+            outletSwitcherGrid.querySelectorAll('[data-select-outlet]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeOutletId = btn.getAttribute('data-select-outlet');
+                    renderAll();
+                });
+            });
+        }
+
+        function syncAdminMasterInputs() {
+            if (document.activeElement !== inputTitle) {
+                inputTitle.value = masterData.title || '';
+            }
+            if (document.activeElement !== inputFooter) {
+                inputFooter.value = masterData.footer || '';
+            }
+        }
+
+        function syncCheckerInput() {
+            if (document.activeElement !== inputCheckerName) {
+                inputCheckerName.value = outletCheckersMap[activeOutletId] || '';
+            }
+        }
+
+        function renderCategoryFilterBar() {
+            let html = `
+                <button type="button" data-filter-cat="all"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                        activeCategoryFilter === 'all'
+                            ? 'bg-wa-dark text-white shadow-xs'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                    }">
+                    Semua (${masterData.categories.length})
+                </button>
+            `;
+
+            masterData.categories.forEach(cat => {
+                const stats = getCategoryStats(activeOutletId, cat);
+                const isActive = activeCategoryFilter === cat.id;
+                const shortName = cat.name.split('(')[0].trim();
+                html += `
+                    <button type="button" data-filter-cat="${cat.id}"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5 ${
+                            isActive
+                                ? 'bg-wa-dark text-white shadow-xs'
+                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        }">
+                        <span>${escapeHtml(shortName)}</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-md ${isActive ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700'}">
+                            ${stats.done}/${stats.total}
+                        </span>
+                    </button>
+                `;
+            });
+
+            categoryFilterBar.innerHTML = html;
+            categoryFilterBar.querySelectorAll('[data-filter-cat]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeCategoryFilter = btn.getAttribute('data-filter-cat');
+                    renderCategoryFilterBar();
+                    renderCategoriesList();
+                });
+            });
+        }
+
+        function renderCategoriesList() {
+            const isAdmin = currentRole === 'admin';
+            const visibleCategories = activeCategoryFilter === 'all'
+                ? masterData.categories
+                : masterData.categories.filter(c => c.id === activeCategoryFilter);
+
+            if (visibleCategories.length === 0) {
+                categoriesContainer.innerHTML = `
+                    <div class="bg-white rounded-3xl p-8 text-center border border-slate-200 text-slate-500 text-sm">
+                        Belum ada kategori ceklis. ${isAdmin ? 'Tambahkan kategori baru di atas.' : ''}
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            visibleCategories.forEach(cat => {
+                const stats = getCategoryStats(activeOutletId, cat);
+                const isCollapsed = collapsedCategories.has(cat.id);
+                const filledMini = stats.total > 0 ? Math.round((stats.done / stats.total) * 5) : 0;
+
+                let miniBarHtml = '';
+                for (let i = 0; i < 5; i++) {
+                    miniBarHtml += `<div class="h-1.5 rounded-sm ${i < filledMini ? 'bg-emerald-500' : 'bg-slate-200'}"></div>`;
+                }
+
+                let tasksHtml = '';
+                (cat.tasks || []).forEach((task, idx) => {
+                    const checked = isTaskDone(activeOutletId, task.id);
+                    tasksHtml += `
+                        <div class="group flex items-start gap-3 p-3 rounded-2xl border transition-all ${
+                            checked
+                                ? 'bg-emerald-50/60 border-emerald-200/80'
+                                : 'bg-slate-50/60 border-slate-200/70 hover:bg-white hover:border-emerald-300'
+                        }">
+                            <button type="button" data-toggle-task="${task.id}"
+                                class="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                                    checked
+                                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs'
+                                        : 'bg-white border-slate-300 hover:border-emerald-500'
+                                }"
+                                aria-label="Tandai tugas selesai">
+                                ${checked ? `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
+                            </button>
+
+                            <div class="flex-1 min-w-0">
+                                ${isAdmin ? `
+                                    <input type="text" data-edit-task-cat="${cat.id}" data-edit-task-id="${task.id}"
+                                        value="${escapeHtml(task.text)}"
+                                        class="w-full bg-transparent text-sm leading-snug font-medium focus:outline-none focus:bg-white focus:px-2 focus:py-1 focus:rounded-lg focus:ring-2 focus:ring-wa-primary/30 ${
+                                            checked ? 'line-through text-slate-400' : 'text-slate-800'
+                                        }">
+                                ` : `
+                                    <div data-toggle-task="${task.id}" class="text-sm leading-snug font-medium cursor-pointer select-none ${
+                                        checked ? 'line-through text-slate-400' : 'text-slate-800'
+                                    }">
+                                        ${escapeHtml(task.text)}
+                                    </div>
+                                `}
+                            </div>
+
+                            ${isAdmin ? `
+                                <button type="button" data-delete-task-cat="${cat.id}" data-delete-task-id="${task.id}"
+                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                                    title="Hapus item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                    </svg>
+                                </button>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+
+                html += `
+                    <section class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
+                        <!-- Header Kartu Kategori -->
+                        <div class="px-4 sm:px-5 py-3.5 bg-slate-50/70 border-b border-slate-100 flex flex-col gap-2.5">
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-2 flex-1 min-w-0">
+                                    <button type="button" data-toggle-collapse="${cat.id}"
+                                        class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 rounded-lg transition-transform cursor-pointer shrink-0 ${isCollapsed ? '-rotate-90' : ''}"
+                                        title="Buka / Tutup kategori">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="6 9 12 15 18 9"></polyline>
+                                        </svg>
+                                    </button>
+
+                                    ${isAdmin ? `
+                                        <input type="text" data-edit-cat-id="${cat.id}" value="${escapeHtml(cat.name)}"
+                                            class="flex-1 min-w-0 bg-transparent text-sm sm:text-base font-extrabold text-slate-800 focus:outline-none focus:bg-white focus:px-2 focus:py-0.5 focus:rounded-lg focus:ring-2 focus:ring-wa-primary/30">
+                                    ` : `
+                                        <h3 data-toggle-collapse="${cat.id}" class="text-sm sm:text-base font-extrabold text-slate-800 truncate cursor-pointer">
+                                            ${escapeHtml(cat.name)}
+                                        </h3>
+                                    `}
+                                </div>
+
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <span class="text-xs font-extrabold px-2.5 py-1 rounded-full ${
+                                        stats.percent === 100
+                                            ? 'bg-emerald-500 text-white'
+                                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    }">
+                                        ${stats.done}/${stats.total} (${stats.percent}%)
+                                    </span>
+
+                                    ${isAdmin ? `
+                                        <button type="button" data-delete-cat="${cat.id}"
+                                            class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                                            title="Hapus kategori">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M3 6h18"></path>
+                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                            </svg>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+
+                            <!-- Mini Progress Bar 5 Segmen -->
+                            <div class="grid grid-cols-5 gap-1.5 pl-8">
+                                ${miniBarHtml}
+                            </div>
+                        </div>
+
+                        <!-- Isi Daftar Tugas -->
+                        <div class="${isCollapsed ? 'hidden' : 'p-4 sm:p-5 space-y-2.5'}">
+                            ${tasksHtml || '<p class="text-xs text-slate-400 italic text-center py-2">Belum ada tugas di kategori ini.</p>'}
+
+                            ${isAdmin ? `
+                                <form data-add-task-form="${cat.id}" class="flex gap-2 pt-2 border-t border-slate-100 mt-3">
+                                    <input type="text" placeholder="Tambah item tugas baru..."
+                                        class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary">
+                                    <button type="submit"
+                                        class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shrink-0">
+                                        + Item
+                                    </button>
+                                </form>
+                            ` : ''}
+                        </div>
+                    </section>
+                `;
+            });
+
+            categoriesContainer.innerHTML = html;
+            bindCategoryEvents();
+        }
+
+        function bindCategoryEvents() {
+            // Toggle centang tugas (Admin & Sub-Akun)
+            categoriesContainer.querySelectorAll('[data-toggle-task]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const taskId = el.getAttribute('data-toggle-task');
+                    const checks = getChecksForOutlet(activeOutletId);
+                    checks[taskId] = !checks[taskId];
+                    saveOutletProgress(activeOutletId);
+                    renderAll();
+                });
+            });
+
+            // Collapse / Expand kategori
+            categoriesContainer.querySelectorAll('[data-toggle-collapse]').forEach(el => {
+                el.addEventListener('click', () => {
+                    const catId = el.getAttribute('data-toggle-collapse');
+                    if (collapsedCategories.has(catId)) {
+                        collapsedCategories.delete(catId);
+                    } else {
+                        collapsedCategories.add(catId);
+                    }
+                    renderCategoriesList();
+                });
+            });
+
+            if (currentRole !== 'admin') return;
+
+            // Edit nama kategori
+            categoriesContainer.querySelectorAll('[data-edit-cat-id]').forEach(input => {
+                input.addEventListener('input', () => {
+                    const catId = input.getAttribute('data-edit-cat-id');
+                    const cat = masterData.categories.find(c => c.id === catId);
+                    if (cat) {
+                        cat.name = input.value;
+                        saveMasterConfig(false);
+                        renderCategoryFilterBar();
+                        renderWACategoryDropdown();
+                        renderWhatsAppPreview();
+                    }
+                });
+            });
+
+            // Hapus kategori
+            categoriesContainer.querySelectorAll('[data-delete-cat]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const catId = btn.getAttribute('data-delete-cat');
+                    const cat = masterData.categories.find(c => c.id === catId);
+                    if (!cat) return;
+                    openConfirmModal(
+                        'Hapus Kategori?',
+                        `Kategori "${cat.name}" beserta seluruh tugas di dalamnya akan dihapus dari template master semua outlet.`,
+                        () => {
+                            masterData.categories = masterData.categories.filter(c => c.id !== catId);
+                            if (activeCategoryFilter === catId) activeCategoryFilter = 'all';
+                            if (waSelectedCategory === catId) waSelectedCategory = 'all';
+                            saveMasterConfig(true);
+                            renderAll();
+                            showToast('Kategori dihapus');
+                        }
+                    );
+                });
+            });
+
+            // Edit teks tugas
+            categoriesContainer.querySelectorAll('[data-edit-task-id]').forEach(input => {
+                input.addEventListener('input', () => {
+                    const catId = input.getAttribute('data-edit-task-cat');
+                    const taskId = input.getAttribute('data-edit-task-id');
+                    const cat = masterData.categories.find(c => c.id === catId);
+                    const task = cat?.tasks.find(t => t.id === taskId);
+                    if (task) {
+                        task.text = input.value;
+                        saveMasterConfig(false);
+                        renderWhatsAppPreview();
+                    }
+                });
+            });
+
+            // Hapus tugas
+            categoriesContainer.querySelectorAll('[data-delete-task-id]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const catId = btn.getAttribute('data-delete-task-cat');
+                    const taskId = btn.getAttribute('data-delete-task-id');
+                    const cat = masterData.categories.find(c => c.id === catId);
+                    if (cat) {
+                        cat.tasks = cat.tasks.filter(t => t.id !== taskId);
+                        saveMasterConfig(true);
+                        renderAll();
+                        showToast('Item tugas dihapus');
+                    }
+                });
+            });
+
+            // Tambah tugas baru dalam kategori
+            categoriesContainer.querySelectorAll('[data-add-task-form]').forEach(form => {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const catId = form.getAttribute('data-add-task-form');
+                    const input = form.querySelector('input');
+                    const text = input.value.trim();
+                    if (!text) return;
+                    const cat = masterData.categories.find(c => c.id === catId);
+                    if (cat) {
+                        cat.tasks.push({
+                            id: 't_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                            text
+                        });
+                        input.value = '';
+                        saveMasterConfig(true);
+                        renderAll();
+                        showToast('Item tugas ditambahkan');
+                    }
+                });
+            });
+        }
+
+        // =====================================================
+        // 8. GENERATOR & PRATINJAU PESAN WHATSAPP
+        // =====================================================
+        function renderWACategoryDropdown() {
+            const prevVal = waSelectedCategory;
+            let options = '<option value="all">Semua Kategori</option>';
+            masterData.categories.forEach(cat => {
+                options += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+            });
+            waCategoryFilter.innerHTML = options;
+            if (prevVal === 'all' || masterData.categories.some(c => c.id === prevVal)) {
+                waCategoryFilter.value = prevVal;
+            } else {
+                waSelectedCategory = 'all';
+                waCategoryFilter.value = 'all';
+            }
+        }
+
+        function generateWhatsAppText() {
+            const outlet = getOutletById(activeOutletId);
+            const checker = getCheckerNameForOutlet(activeOutletId);
+            const targetCats = waSelectedCategory === 'all'
+                ? masterData.categories
+                : masterData.categories.filter(c => c.id === waSelectedCategory);
+
+            let totalTasks = 0;
+            let totalDone = 0;
+            targetCats.forEach(cat => {
+                const st = getCategoryStats(activeOutletId, cat);
+                totalTasks += st.total;
+                totalDone += st.done;
+            });
+            const overallPercent = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) : 0;
+            const mainBar = buildGreenEmojiBar(totalDone, totalTasks, masterData.waBarScale);
+
+            const lines = [];
+            lines.push(`*${(masterData.title || 'CEKLIS OPERASIONAL OUTLET MOMOYO').toUpperCase()}*`);
+            if (outlet) {
+                lines.push(`🏪 *${outlet.name}*`);
+            }
+            if (checker) {
+                lines.push(`👤 Checker: *${checker}*`);
+            }
+            if (masterData.showDate) {
+                lines.push(`📅 ${getFormattedDateID()}`);
+            }
+
+            lines.push('');
+            lines.push(`Progres: ${mainBar} *${overallPercent}%* (${totalDone}/${totalTasks})`);
+
+            targetCats.forEach(cat => {
+                const catStats = getCategoryStats(activeOutletId, cat);
+                lines.push('');
+                lines.push(`*${cat.name}* (${catStats.done}/${catStats.total})`);
+                if (masterData.showCategoryBarsInWA) {
+                    const catBar = buildGreenEmojiBar(catStats.done, catStats.total, masterData.waBarScale);
+                    lines.push(`${catBar} ${catStats.percent}%`);
+                }
+                (cat.tasks || []).forEach(task => {
+                    const done = isTaskDone(activeOutletId, task.id);
+                    const icon = done ? '✅' : '⬜';
+                    const taskLabel = (done && masterData.strikethrough) ? `~${task.text}~` : task.text;
+                    lines.push(`${icon} ${taskLabel}`);
+                });
+            });
+
+            if (masterData.footer && masterData.footer.trim()) {
+                lines.push('');
+                lines.push(`_${masterData.footer.trim()}_`);
+            }
+
+            return {
+                text: lines.join('\n'),
+                percent: overallPercent
+            };
+        }
+
+        function formatWhatsAppPreviewHtml(rawText) {
+            let safe = escapeHtml(rawText);
+            // Format *bold*, _italic_, ~strikethrough~ khas WhatsApp
+            safe = safe.replace(/\*([^\*\n]+)\*/g, '<strong class="font-bold">$1</strong>');
+            safe = safe.replace(/_([^_\n]+)_/g, '<em class="italic">$1</em>');
+            safe = safe.replace(/~([^~\n]+)~/g, '<del class="line-through text-slate-500">$1</del>');
+            return safe;
+        }
+
+        function renderWhatsAppPreview() {
+            const outlet = getOutletById(activeOutletId);
+            const result = generateWhatsAppText();
+            waPreviewContent.innerHTML = formatWhatsAppPreviewHtml(result.text);
+            previewPercentBadge.textContent = `${result.percent}%`;
+            previewOutletSub.textContent = `${outlet ? outlet.name : 'Outlet MOMOYO'} • Tab Hijau 🟩`;
+            previewTime.textContent = getCurrentTimeHM();
+        }
+
+        // =====================================================
+        // 9. SALIN PESAN & KIRIM KE WHATSAPP
+        // =====================================================
+        function copyWhatsAppMessage() {
+            const { text } = generateWhatsAppText();
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Pesan WhatsApp berhasil disalin!');
+            } catch (err) {
+                showToast('Gagal menyalin pesan.');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function sendToWhatsApp() {
+            const { text } = generateWhatsAppText();
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        // =====================================================
+        // 10. MODAL PENGATURAN, RESET HARIAN & KONFIRMASI
+        // =====================================================
+        function openSettingsModal() {
+            if (currentRole !== 'admin') return;
+            settingsErrorMsg.classList.add('hidden');
+            inputAdminPin.value = masterData.adminPin || '1234';
+            inputAdminPin.type = 'password';
+            settingAutoDate.checked = !!masterData.showDate;
+            settingStrikethrough.checked = !!masterData.strikethrough;
+            settingCategoryBars.checked = !!masterData.showCategoryBarsInWA;
+            tempWaBarScale = masterData.waBarScale || '10';
+            updateWaScaleButtons();
+
+            // Isi kotak konfigurasi server jika sudah tersimpan sebelumnya
+            cloudConfigFeedback.classList.add('hidden');
+            const resolved = resolveCloudConfig();
+            if (resolved.config && resolved.isExternal) {
+                inputCloudConfigJson.value = JSON.stringify(resolved.config, null, 2);
+            } else {
+                inputCloudConfigJson.value = '';
+            }
+            updateSyncStatusUI(useCloudSync, useCloudSync ? 'Terhubung ke server real-time' : 'Mode Lokal');
+
+            // Render input Nama & PIN untuk 5 outlet
+            let listHtml = '';
+            masterData.outlets.forEach((outlet, idx) => {
+                listHtml += `
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-slate-50 border border-slate-200 rounded-2xl p-2.5">
+                        <div class="sm:col-span-8">
+                            <input type="text" data-setting-outlet-name="${outlet.id}" value="${escapeHtml(outlet.name)}" required
+                                placeholder="Nama Outlet ${idx + 1}"
+                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
+                        </div>
+                        <div class="sm:col-span-4 relative flex items-center">
+                            <input type="password" data-setting-outlet-pin="${outlet.id}" value="${escapeHtml(outlet.pin)}" inputmode="numeric" maxlength="10" required
+                                placeholder="PIN"
+                                class="w-full pl-3 pr-9 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
+                            <button type="button" data-toggle-pin-vis="${outlet.id}" class="absolute right-2 p-1 text-slate-400 hover:text-slate-700 cursor-pointer" title="Tampilkan / Sembunyikan PIN">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            settingsOutletsList.innerHTML = listHtml;
+
+            settingsOutletsList.querySelectorAll('[data-toggle-pin-vis]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const oId = btn.getAttribute('data-toggle-pin-vis');
+                    const inp = settingsOutletsList.querySelector(`[data-setting-outlet-pin="${oId}"]`);
+                    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+                });
+            });
+
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
+        }
+
+        function closeSettingsModal() {
+            settingsModal.classList.add('hidden');
+            settingsModal.classList.remove('flex');
+        }
+
+        function updateWaScaleButtons() {
+            document.querySelectorAll('.wa-scale-btn').forEach(btn => {
+                const val = btn.getAttribute('data-wa-scale');
+                if (val === tempWaBarScale) {
+                    btn.classList.add('border-wa-primary', 'bg-emerald-50/70');
+                    btn.classList.remove('border-slate-200', 'bg-white');
+                } else {
+                    btn.classList.remove('border-wa-primary', 'bg-emerald-50/70');
+                    btn.classList.add('border-slate-200', 'bg-white');
+                }
+            });
+        }
+
+        function handleSaveSettings(e) {
+            e.preventDefault();
+            settingsErrorMsg.classList.add('hidden');
+
+            const newAdminPin = inputAdminPin.value.trim();
+            if (newAdminPin.length < 4) {
+                settingsErrorMsg.textContent = 'PIN Administrator minimal 4 karakter.';
+                settingsErrorMsg.classList.remove('hidden');
+                return;
+            }
+
+            const pinSet = new Set([newAdminPin]);
+            const updatedOutlets = [];
+
+            for (const outlet of masterData.outlets) {
+                const nameEl = settingsOutletsList.querySelector(`[data-setting-outlet-name="${outlet.id}"]`);
+                const pinEl = settingsOutletsList.querySelector(`[data-setting-outlet-pin="${outlet.id}"]`);
+                const nameVal = (nameEl?.value || '').trim();
+                const pinVal = (pinEl?.value || '').trim();
+
+                if (!nameVal) {
+                    settingsErrorMsg.textContent = 'Nama semua outlet wajib diisi.';
+                    settingsErrorMsg.classList.remove('hidden');
+                    return;
+                }
+                if (pinVal.length < 4) {
+                    settingsErrorMsg.textContent = `PIN untuk ${nameVal} minimal 4 karakter.`;
+                    settingsErrorMsg.classList.remove('hidden');
+                    return;
+                }
+                if (pinSet.has(pinVal)) {
+                    settingsErrorMsg.textContent = `PIN "${pinVal}" digunakan lebih dari satu akun. Setiap PIN harus unik.`;
+                    settingsErrorMsg.classList.remove('hidden');
+                    return;
+                }
+                pinSet.add(pinVal);
+                updatedOutlets.push({ id: outlet.id, name: nameVal, pin: pinVal });
+            }
+
+            masterData.adminPin = newAdminPin;
+            masterData.outlets = updatedOutlets;
+            masterData.waBarScale = tempWaBarScale;
+            masterData.showDate = settingAutoDate.checked;
+            masterData.strikethrough = settingStrikethrough.checked;
+            masterData.showCategoryBarsInWA = settingCategoryBars.checked;
+
+            saveMasterConfig(true);
+            closeSettingsModal();
+            renderAll();
+            showToast('Pengaturan berhasil disimpan!');
+        }
+
+        function openResetMenuModal() {
+            const outlet = getOutletById(activeOutletId);
+            lblMenuResetCurrent.textContent = `Reset ${outlet ? outlet.name : 'Outlet Terpilih'}`;
+            resetMenuModal.classList.remove('hidden');
+            resetMenuModal.classList.add('flex');
+        }
+
+        function closeResetMenuModal() {
+            resetMenuModal.classList.add('hidden');
+            resetMenuModal.classList.remove('flex');
+        }
+
+        function openConfirmModal(title, message, onProceed) {
+            confirmModalTitle.textContent = title;
+            confirmModalMessage.textContent = message;
+            pendingConfirmAction = onProceed;
+            confirmModal.classList.remove('hidden');
+            confirmModal.classList.add('flex');
+        }
+
+        function closeConfirmModal() {
+            confirmModal.classList.add('hidden');
+            confirmModal.classList.remove('flex');
+            pendingConfirmAction = null;
+        }
+
+        async function resetOutletData(outletId) {
+            outletChecksMap[outletId] = {};
+            outletCheckersMap[outletId] = '';
+            await saveOutletProgress(outletId);
+            renderAll();
+            const outlet = getOutletById(outletId);
+            showToast(`Progres ${outlet ? outlet.name : 'outlet'} direset ke 0%`);
+        }
+
+        async function resetAllOutletsData() {
+            for (const outlet of masterData.outlets) {
+                outletChecksMap[outlet.id] = {};
+                outletCheckersMap[outlet.id] = '';
+                await saveOutletProgress(outlet.id);
+            }
+            renderAll();
+            showToast('Semua 5 outlet berhasil direset ke 0%');
+        }
+
+        // =====================================================
+        // 11. REGISTRASI EVENT LISTENERS
+        // =====================================================
+        loginForm.addEventListener('submit', handleLoginSubmit);
+        btnLogout.addEventListener('click', handleLogout);
+
+        // Input Nama Checker (auto-save debounced per outlet)
+        inputCheckerName.addEventListener('input', () => {
+            const val = inputCheckerName.value;
+            outletCheckersMap[activeOutletId] = val;
+            checkerSaveStatus.textContent = 'Menyimpan...';
+            renderWhatsAppPreview();
+            if (currentRole === 'admin') renderAdminOutletsOverview();
+
+            if (saveCheckerTimer) clearTimeout(saveCheckerTimer);
+            saveCheckerTimer = setTimeout(async () => {
+                await saveOutletProgress(activeOutletId);
+                checkerSaveStatus.textContent = 'Tersimpan otomatis';
+            }, 400);
+        });
+
+        // Edit Judul & Footer Master (Khusus Admin)
+        inputTitle.addEventListener('input', () => {
+            if (currentRole !== 'admin') return;
+            masterData.title = inputTitle.value;
+            saveMasterConfig(false);
+            renderStickyHeaderProgress();
+            renderWhatsAppPreview();
+        });
+
+        inputFooter.addEventListener('input', () => {
+            if (currentRole !== 'admin') return;
+            masterData.footer = inputFooter.value;
+            saveMasterConfig(false);
+            renderWhatsAppPreview();
+        });
+
+        // Tambah Kategori Baru (Khusus Admin)
+        formAddCategory.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (currentRole !== 'admin') return;
+            const name = inputNewCategory.value.trim();
+            if (!name) return;
+            masterData.categories.push({
+                id: 'cat_' + Date.now(),
+                name,
+                tasks: []
+            });
+            inputNewCategory.value = '';
+            saveMasterConfig(true);
+            renderAll();
+            showToast('Kategori baru ditambahkan');
+        });
+
+        // Buka / Tutup Semua Accordion
+        btnExpandAll.addEventListener('click', () => {
+            collapsedCategories.clear();
+            renderCategoriesList();
+        });
+
+        btnCollapseAll.addEventListener('click', () => {
+            masterData.categories.forEach(c => collapsedCategories.add(c.id));
+            renderCategoriesList();
+        });
+
+        // Dropdown Filter Kirim WA
+        waCategoryFilter.addEventListener('change', () => {
+            waSelectedCategory = waCategoryFilter.value;
+            renderWhatsAppPreview();
+        });
+
+        // Tombol Salin & Kirim WA
+        btnCopyText.addEventListener('click', copyWhatsAppMessage);
+        btnSendWA.addEventListener('click', sendToWhatsApp);
+
+        // Tombol Reset di Dashboard Admin & Header
+        btnHeaderResetMenu.addEventListener('click', openResetMenuModal);
+        btnCloseResetMenu.addEventListener('click', closeResetMenuModal);
+
+        btnMenuResetCurrent.addEventListener('click', () => {
+            closeResetMenuModal();
+            const outlet = getOutletById(activeOutletId);
+            openConfirmModal(
+                'Reset Centang Outlet?',
+                `Semua centang dan Nama Checker pada "${outlet ? outlet.name : 'outlet ini'}" akan dikosongkan ke 0%.`,
+                () => resetOutletData(activeOutletId)
+            );
+        });
+
+        btnMenuResetAll.addEventListener('click', () => {
+            closeResetMenuModal();
+            openConfirmModal(
+                'Reset Semua 5 Outlet?',
+                'Seluruh status centang dan Nama Checker untuk kelima outlet MOMOYO akan dikosongkan ke 0%.',
+                () => resetAllOutletsData()
+            );
+        });
+
+        btnResetSelectedOutlet.addEventListener('click', () => {
+            const outlet = getOutletById(activeOutletId);
+            openConfirmModal(
+                'Reset Centang Outlet?',
+                `Semua centang dan Nama Checker pada "${outlet ? outlet.name : 'outlet ini'}" akan dikosongkan ke 0%.`,
+                () => resetOutletData(activeOutletId)
+            );
+        });
+
+        btnResetAllOutlets.addEventListener('click', () => {
+            openConfirmModal(
+                'Reset Semua 5 Outlet?',
+                'Seluruh status centang dan Nama Checker untuk kelima outlet MOMOYO akan dikosongkan ke 0%.',
+                () => resetAllOutletsData()
+            );
+        });
+
+        // Modal Pengaturan Admin
+        btnOpenSettings.addEventListener('click', openSettingsModal);
+        btnCloseSettings.addEventListener('click', closeSettingsModal);
+        btnCancelSettings.addEventListener('click', closeSettingsModal);
+        settingsForm.addEventListener('submit', handleSaveSettings);
+
+        btnToggleAdminPin.addEventListener('click', () => {
+            inputAdminPin.type = inputAdminPin.type === 'password' ? 'text' : 'password';
+        });
+
+        document.querySelectorAll('.wa-scale-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                tempWaBarScale = btn.getAttribute('data-wa-scale');
+                updateWaScaleButtons();
+            });
+        });
+
+        btnModalRestoreDefaults.addEventListener('click', () => {
+            openConfirmModal(
+                'Kembalikan Template Bawaan?',
+                'Daftar kategori dan 40 item ceklis akan dikembalikan ke versi standar awal (PAGI, MIDDLE, PELAPORAN, CLOSING).',
+                () => {
+                    masterData.categories = createDefaultCategories();
+                    activeCategoryFilter = 'all';
+                    waSelectedCategory = 'all';
+                    saveMasterConfig(true);
+                    closeSettingsModal();
+                    renderAll();
+                    showToast('Template 4 kategori & 40 item dikembalikan');
+                }
+            );
+        });
+
+        // Aksi Koneksi Server Real-Time untuk GitHub Pages
+        function showCloudFeedback(msg, isError = false) {
+            cloudConfigFeedback.textContent = msg;
+            cloudConfigFeedback.className = `text-xs font-semibold mt-1.5 ${isError ? 'text-rose-600' : 'text-emerald-700'}`;
+            cloudConfigFeedback.classList.remove('hidden');
+        }
+
+        btnSaveCloudConfig.addEventListener('click', async () => {
+            const parsed = parseCloudConfigInput(inputCloudConfigJson.value);
+            if (!parsed) {
+                showCloudFeedback('Format tidak valid. Pastikan terdapat apiKey dan projectId.', true);
+                return;
+            }
+            localStorage.setItem(LOCAL_CLOUD_CFG_KEY, JSON.stringify(parsed));
+            inputCloudConfigJson.value = JSON.stringify(parsed, null, 2);
+            showCloudFeedback('Menghubungkan ke server real-time...', false);
+            await initFirebase();
+            if (useCloudSync) {
+                showCloudFeedback('Berhasil terhubung! Semua perangkat akan saling tersinkronisasi.', false);
+                showToast('Server Real-Time terhubung!');
+            } else {
+                showCloudFeedback('Config tersimpan, namun koneksi gagal. Periksa aturan akses database.', true);
+            }
+        });
+
+        btnDownloadGitHubHtml.addEventListener('click', () => {
+            const parsed = parseCloudConfigInput(inputCloudConfigJson.value) || resolveCloudConfig().config;
+            if (!parsed) {
+                showCloudFeedback('Tempel konfigurasi server terlebih dahulu sebelum mengunduh file.', true);
+                return;
+            }
+
+            const clonedDoc = document.documentElement.cloneNode(true);
+            const cLogin = clonedDoc.querySelector('#loginScreen');
+            const cApp = clonedDoc.querySelector('#appScreen');
+            const cSettings = clonedDoc.querySelector('#settingsModal');
+            if (cLogin) cLogin.classList.remove('hidden');
+            if (cApp) cApp.classList.add('hidden');
+            if (cSettings) {
+                cSettings.classList.add('hidden');
+                cSettings.classList.remove('flex');
+            }
+
+            ['#categoriesContainer', '#outletSwitcherGrid', '#waPreviewContent', '#settingsOutletsList', '#categoryFilterBar', '#mainGreenTabsContainer'].forEach(sel => {
+                const el = clonedDoc.querySelector(sel);
+                if (el) el.innerHTML = '';
+            });
+
+            let htmlStr = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+            htmlStr = htmlStr.replace(
+                /\/\* __CLOUD_CONFIG_START__ \*\/[\s\S]*?\/\* __CLOUD_CONFIG_END__ \*\//,
+                `/* __CLOUD_CONFIG_START__ */\n        const EMBEDDED_CLOUD_CONFIG = ${JSON.stringify(parsed)};\n        /* __CLOUD_CONFIG_END__ */`
+            );
+
+            const blob = new Blob([htmlStr], { type: 'text/html;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'index.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('File index.html siap upload ke GitHub berhasil diunduh!');
+        });
+
+        btnCopyOutletShareLink.addEventListener('click', () => {
+            const parsed = parseCloudConfigInput(inputCloudConfigJson.value) || resolveCloudConfig().config;
+            if (!parsed) {
+                showCloudFeedback('Tempel konfigurasi server terlebih dahulu untuk membuat link.', true);
+                return;
+            }
+            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(parsed))))
+                .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareUrl = `${baseUrl}#cfg=${encoded}`;
+
+            const ta = document.createElement('textarea');
+            ta.value = shareUrl;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast('Link terhubung untuk 5 outlet berhasil disalin!');
+        });
+
+        btnClearCloudConfig.addEventListener('click', async () => {
+            localStorage.removeItem(LOCAL_CLOUD_CFG_KEY);
+            inputCloudConfigJson.value = '';
+            await initFirebase();
+            showCloudFeedback('Koneksi server kustom direset.', false);
+            showToast('Koneksi server direset');
+        });
+
+        // Modal Konfirmasi Universal
+        btnConfirmCancel.addEventListener('click', closeConfirmModal);
+        btnConfirmProceed.addEventListener('click', () => {
+            const action = pendingConfirmAction;
+            closeConfirmModal();
+            if (typeof action === 'function') action();
+        });
+
+        // Klik di luar modal untuk menutup
+        [settingsModal, resetMenuModal, confirmModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            });
+        });
+
+        // =====================================================
+        // 12. MULAI APLIKASI
+        // =====================================================
+        initFirebase();
+        setTimeout(() => loginPinInput.focus(), 150);
+    </script>
+</body>
+</html>

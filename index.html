@@ -145,10 +145,11 @@
                     <div class="min-w-0">
                         <div class="flex items-center gap-2 flex-wrap">
                             <h1 id="headerMainTitle" class="text-sm sm:text-lg font-extrabold leading-tight truncate">Ceklis Progres WhatsApp</h1>
-                            <span id="syncBadge" class="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-50 border border-emerald-300/30 shrink-0">
+                            <button type="button" id="btnForceSync" title="Klik untuk menyinkronkan data terbaru sekarang"
+                                class="inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/30 hover:bg-emerald-500/45 text-emerald-50 border border-emerald-300/30 shrink-0 transition-colors cursor-pointer">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span>
                                 <span>Real-Time</span>
-                            </span>
+                            </button>
                         </div>
                         <p class="text-[11px] text-emerald-100 mt-0.5 truncate" id="headerRoleSubtitle">
                             Operasional Outlet
@@ -632,10 +633,14 @@
         // =====================================================
         // 1. DATA BAWAAN: 5 OUTLET MOMOYO & 4 KATEGORI (40 ITEM)
         // =====================================================
-        const LOCAL_MASTER_KEY = 'momoyo_checklist_master_v2';
-        const LOCAL_PROGRESS_KEY = 'momoyo_checklist_progress_v2';
-        const MQTT_TOPIC_PREFIX = 'momoyo_ops_live_sync_v2_tity2ruby';
+        const LOCAL_MASTER_KEY = 'momoyo_checklist_master_v3';
+        const LOCAL_PROGRESS_KEY = 'momoyo_checklist_progress_v3';
+        const MQTT_TOPIC_PREFIX = 'momoyo_ops_live_sync_v3_tity2ruby';
         const CLIENT_SESSION_ID = 'client_' + Math.random().toString(36).slice(2, 10);
+        const MQTT_BROKERS = [
+            { name: 'primary', url: 'wss://broker.emqx.io:8084/mqtt' },
+            { name: 'backup', url: 'wss://broker.hivemq.com:8884/mqtt' }
+        ];
 
         function createDefaultOutlets() {
             return [
@@ -752,10 +757,11 @@
         let checkerSaveTimer = null;
         let masterSaveTimer = null;
 
-        let mqttClient = null;
+        let mqttClients = [];
         let isRealtimeConnected = false;
         let masterUpdatedAt = 0;
         let outletUpdatedAtMap = {};
+        let lastSyncReplyAt = 0;
 
         // =====================================================
         // 3. REFERENSI ELEMEN DOM
@@ -767,7 +773,7 @@
         const loginErrorMsg = document.getElementById('loginErrorMsg');
         const loginSyncStatus = document.getElementById('loginSyncStatus');
 
-        const syncBadge = document.getElementById('syncBadge');
+        const btnForceSync = document.getElementById('btnForceSync');
         const headerRoleSubtitle = document.getElementById('headerRoleSubtitle');
         const roleBadge = document.getElementById('roleBadge');
         const btnHeaderResetMenu = document.getElementById('btnHeaderResetMenu');
@@ -953,8 +959,14 @@
                 const rawMaster = localStorage.getItem(LOCAL_MASTER_KEY);
                 if (rawMaster) {
                     const parsed = JSON.parse(rawMaster);
-                    if (parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.outlets)) {
-                        masterData = { ...createDefaultMasterConfig(), ...parsed };
+                    if (parsed && typeof parsed === 'object') {
+                        const cfg = parsed.master || parsed;
+                        if (Array.isArray(cfg.categories) && Array.isArray(cfg.outlets)) {
+                            masterData = { ...createDefaultMasterConfig(), ...cfg };
+                        }
+                        if (typeof parsed.updatedAt === 'number') {
+                            masterUpdatedAt = parsed.updatedAt;
+                        }
                     }
                 }
             } catch (e) {
@@ -979,7 +991,10 @@
 
         function saveMasterToLocal() {
             try {
-                localStorage.setItem(LOCAL_MASTER_KEY, JSON.stringify(masterData));
+                localStorage.setItem(LOCAL_MASTER_KEY, JSON.stringify({
+                    updatedAt: masterUpdatedAt,
+                    master: masterData
+                }));
             } catch (e) {
                 console.warn('Gagal menyimpan master lokal:', e);
             }
@@ -997,58 +1012,93 @@
             }
         }
 
-        function updateSyncConnectionUI(connected) {
-            isRealtimeConnected = connected;
-            if (connected) {
+        function refreshSyncStatusIndicator() {
+            const connectedCount = mqttClients.filter(c => c && c.connected).length;
+            isRealtimeConnected = connectedCount > 0;
+            if (isRealtimeConnected) {
                 loginSyncStatus.innerHTML = `
                     <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                     <span class="text-emerald-700 font-semibold">Terhubung ke server real-time</span>
                 `;
-                syncBadge.className = 'inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-50 border border-emerald-300/30 shrink-0';
-                syncBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span><span>Real-Time</span>`;
+                btnForceSync.className = 'inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/30 hover:bg-emerald-500/45 text-emerald-50 border border-emerald-300/30 shrink-0 transition-colors cursor-pointer';
+                btnForceSync.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span><span>Real-Time</span>`;
             } else {
                 loginSyncStatus.innerHTML = `
                     <span class="w-2 h-2 rounded-full bg-sky-500"></span>
-                    <span class="text-slate-500">Siap digunakan (Penyimpanan Lokal)</span>
+                    <span class="text-slate-500">Siap digunakan (Menghubungkan...)</span>
                 `;
-                syncBadge.className = 'inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/15 text-emerald-100 border border-white/20 shrink-0';
-                syncBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span><span>Lokal</span>`;
+                btnForceSync.className = 'inline-flex items-center gap-1.5 text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-white/15 hover:bg-white/25 text-emerald-100 border border-white/20 shrink-0 transition-colors cursor-pointer';
+                btnForceSync.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span><span>Sinkronkan</span>`;
             }
+        }
+
+        function publishToAllBrokers(topic, payloadObj, retain = true) {
+            const payload = JSON.stringify(payloadObj);
+            mqttClients.forEach(client => {
+                if (client && client.connected) {
+                    try {
+                        client.publish(topic, payload, { qos: 1, retain });
+                    } catch (e) {
+                        console.warn('Gagal publish MQTT:', e);
+                    }
+                }
+            });
+        }
+
+        function subscribeExplicitTopics(client) {
+            if (!client || !client.connected) return;
+            client.subscribe(`${MQTT_TOPIC_PREFIX}/master`, { qos: 1 });
+            client.subscribe(`${MQTT_TOPIC_PREFIX}/sync_request`, { qos: 0 });
+            masterData.outlets.forEach(o => {
+                client.subscribe(`${MQTT_TOPIC_PREFIX}/outlet/${o.id}`, { qos: 1 });
+            });
         }
 
         function broadcastMasterUpdate() {
-            if (!mqttClient || !isRealtimeConnected) return;
-            try {
-                const payload = JSON.stringify({
-                    sender: CLIENT_SESSION_ID,
-                    updatedAt: masterUpdatedAt,
-                    master: masterData
-                });
-                mqttClient.publish(`${MQTT_TOPIC_PREFIX}/master`, payload, { qos: 1, retain: true });
-            } catch (e) {
-                console.warn('Gagal publish master:', e);
-            }
+            if (masterUpdatedAt <= 0) return;
+            publishToAllBrokers(`${MQTT_TOPIC_PREFIX}/master`, {
+                sender: CLIENT_SESSION_ID,
+                updatedAt: masterUpdatedAt,
+                master: masterData
+            }, true);
         }
 
         function broadcastOutletProgress(outletId) {
-            if (!mqttClient || !isRealtimeConnected) return;
-            try {
-                const payload = JSON.stringify({
-                    sender: CLIENT_SESSION_ID,
-                    outletId: outletId,
-                    updatedAt: outletUpdatedAtMap[outletId] || Date.now(),
-                    checks: outletChecksMap[outletId] || {},
-                    checker: outletCheckersMap[outletId] || ''
-                });
-                mqttClient.publish(`${MQTT_TOPIC_PREFIX}/outlet/${outletId}`, payload, { qos: 1, retain: true });
-            } catch (e) {
-                console.warn('Gagal publish progres outlet:', e);
+            const ts = Number(outletUpdatedAtMap[outletId] || 0);
+            if (ts <= 0) return;
+            publishToAllBrokers(`${MQTT_TOPIC_PREFIX}/outlet/${outletId}`, {
+                sender: CLIENT_SESSION_ID,
+                outletId: outletId,
+                updatedAt: ts,
+                checks: outletChecksMap[outletId] || {},
+                checker: outletCheckersMap[outletId] || ''
+            }, true);
+        }
+
+        function broadcastAllKnownState() {
+            if (masterUpdatedAt > 0) {
+                broadcastMasterUpdate();
             }
+            masterData.outlets.forEach(o => {
+                if (Number(outletUpdatedAtMap[o.id] || 0) > 0) {
+                    broadcastOutletProgress(o.id);
+                }
+            });
+        }
+
+        function requestPeerSync() {
+            mqttClients.forEach(client => subscribeExplicitTopics(client));
+            broadcastAllKnownState();
+            publishToAllBrokers(`${MQTT_TOPIC_PREFIX}/sync_request`, {
+                sender: CLIENT_SESSION_ID,
+                requestedAt: Date.now()
+            }, false);
         }
 
         function saveMasterConfig() {
             masterUpdatedAt = Date.now();
             saveMasterToLocal();
+            mqttClients.forEach(client => subscribeExplicitTopics(client));
             broadcastMasterUpdate();
         }
 
@@ -1060,285 +1110,275 @@
 
         function initRealtimeSync() {
             if (typeof mqtt === 'undefined') {
-                updateSyncConnectionUI(false);
+                refreshSyncStatusIndicator();
                 return;
             }
-            try {
-                mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
-                    clientId: 'momoyo_' + Math.random().toString(16).slice(2, 10),
-                    clean: true,
-                    connectTimeout: 8000,
-                    reconnectPeriod: 4000
-                });
 
-                mqttClient.on('connect', () => {
-                    updateSyncConnectionUI(true);
-                    mqttClient.subscribe(`${MQTT_TOPIC_PREFIX}/master`, { qos: 1 });
-                    mqttClient.subscribe(`${MQTT_TOPIC_PREFIX}/outlet/+`, { qos: 1 });
-                });
+            MQTT_BROKERS.forEach(broker => {
+                try {
+                    const client = mqtt.connect(broker.url, {
+                        clientId: `momoyo_${broker.name}_${Math.random().toString(16).slice(2, 10)}`,
+                        clean: true,
+                        connectTimeout: 8000,
+                        reconnectPeriod: 3500
+                    });
 
-                mqttClient.on('reconnect', () => {
-                    updateSyncConnectionUI(false);
-                });
+                    client.on('connect', () => {
+                        refreshSyncStatusIndicator();
+                        subscribeExplicitTopics(client);
+                        broadcastAllKnownState();
+                        client.publish(`${MQTT_TOPIC_PREFIX}/sync_request`, JSON.stringify({
+                            sender: CLIENT_SESSION_ID,
+                            requestedAt: Date.now()
+                        }), { qos: 0, retain: false });
+                    });
 
-                mqttClient.on('offline', () => {
-                    updateSyncConnectionUI(false);
-                });
+                    client.on('reconnect', refreshSyncStatusIndicator);
+                    client.on('offline', refreshSyncStatusIndicator);
+                    client.on('close', refreshSyncStatusIndicator);
+                    client.on('error', refreshSyncStatusIndicator);
 
-                mqttClient.on('error', () => {
-                    updateSyncConnectionUI(false);
-                });
+                    client.on('message', (topic, messageBuffer) => {
+                        try {
+                            const data = JSON.parse(messageBuffer.toString());
+                            if (!data || data.sender === CLIENT_SESSION_ID) return;
 
-                mqttClient.on('message', (topic, messageBuffer) => {
-                    try {
-                        const data = JSON.parse(messageBuffer.toString());
-                        if (!data || data.sender === CLIENT_SESSION_ID) return;
-
-                        if (topic === `${MQTT_TOPIC_PREFIX}/master` && data.master) {
-                            const incomingTs = Number(data.updatedAt || 0);
-                            if (incomingTs > masterUpdatedAt) {
-                                masterUpdatedAt = incomingTs;
-                                masterData = { ...createDefaultMasterConfig(), ...data.master };
-                                ensureOutletMaps();
-                                saveMasterToLocal();
-                                if (currentRole) renderAll();
+                            if (topic === `${MQTT_TOPIC_PREFIX}/sync_request`) {
+                                const now = Date.now();
+                                if (now - lastSyncReplyAt > 1500) {
+                                    lastSyncReplyAt = now;
+                                    broadcastAllKnownState();
+                                }
+                                return;
                             }
-                        } else if (topic.startsWith(`${MQTT_TOPIC_PREFIX}/outlet/`) && data.outletId) {
-                            const oid = data.outletId;
-                            const incomingTs = Number(data.updatedAt || 0);
-                            const currentTs = Number(outletUpdatedAtMap[oid] || 0);
-                            if (incomingTs > currentTs) {
-                                outletUpdatedAtMap[oid] = incomingTs;
-                                outletChecksMap[oid] = data.checks || {};
-                                outletCheckersMap[oid] = typeof data.checker === 'string' ? data.checker : '';
-                                saveProgressToLocal();
-                                if (currentRole) renderAll();
+
+                            if (topic === `${MQTT_TOPIC_PREFIX}/master` && data.master) {
+                                const incomingTs = Number(data.updatedAt || 0);
+                                if (incomingTs > masterUpdatedAt) {
+                                    masterUpdatedAt = incomingTs;
+                                    masterData = { ...createDefaultMasterConfig(), ...data.master };
+                                    ensureOutletMaps();
+                                    saveMasterToLocal();
+                                    mqttClients.forEach(c => subscribeExplicitTopics(c));
+                                    if (currentRole) renderAll();
+                                }
+                            } else if (topic.startsWith(`${MQTT_TOPIC_PREFIX}/outlet/`) && data.outletId) {
+                                const oid = data.outletId;
+                                const incomingTs = Number(data.updatedAt || 0);
+                                const currentTs = Number(outletUpdatedAtMap[oid] || 0);
+                                if (incomingTs > currentTs) {
+                                    outletUpdatedAtMap[oid] = incomingTs;
+                                    outletChecksMap[oid] = data.checks || {};
+                                    outletCheckersMap[oid] = typeof data.checker === 'string' ? data.checker : '';
+                                    saveProgressToLocal();
+                                    if (currentRole) renderAll();
+                                }
                             }
+                        } catch (err) {
+                            console.warn('Pesan sinkronisasi tidak valid:', err);
                         }
-                    } catch (err) {
-                        console.warn('Pesan sinkronisasi tidak valid:', err);
-                    }
-                });
-            } catch (e) {
-                console.warn('Inisialisasi MQTT gagal:', e);
-                updateSyncConnectionUI(false);
-            }
+                    });
+
+                    mqttClients.push(client);
+                } catch (e) {
+                    console.warn(`Inisialisasi broker ${broker.name} gagal:`, e);
+                }
+            });
         }
 
         // =====================================================
-        // 6. AUTENTIKASI & KONTROL AKSES PERAN
+        // 6. AUTENTIKASI LOGIN & LOGOUT (ADMIN / PEMANTAU / OUTLET)
         // =====================================================
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
+            const pin = loginPinInput.value.trim();
             loginErrorMsg.classList.add('hidden');
-            const enteredPin = loginPinInput.value.trim();
-            if (!enteredPin) return;
 
-            // 1. Cek PIN Administrator
-            if (enteredPin === String(masterData.adminPin || '1234')) {
-                currentRole = 'admin';
-                loggedInOutletId = null;
-                activeOutletId = masterData.outlets[0]?.id || 'outlet_2421';
-                enterApp();
-                showToast('Masuk sebagai Administrator');
+            if (pin === masterData.adminPin) {
+                enterAppWithRole('admin', null);
                 return;
             }
 
-            // 2. Cek PIN Pemantau (View-Only)
-            if (enteredPin === String(masterData.viewerPin || '202611')) {
-                currentRole = 'viewer';
-                loggedInOutletId = null;
-                activeOutletId = masterData.outlets[0]?.id || 'outlet_2421';
-                enterApp();
-                showToast('Masuk sebagai Pemantau (View-Only)');
+            if (pin === masterData.viewerPin) {
+                enterAppWithRole('viewer', null);
                 return;
             }
 
-            // 3. Cek PIN 5 Outlet MOMOYO
-            const matchedOutlet = masterData.outlets.find(o => String(o.pin) === enteredPin);
+            const matchedOutlet = masterData.outlets.find(o => o.pin === pin);
             if (matchedOutlet) {
-                currentRole = 'sub';
-                loggedInOutletId = matchedOutlet.id;
-                activeOutletId = matchedOutlet.id;
-                enterApp();
-                showToast(`Masuk sebagai ${matchedOutlet.name}`);
+                enterAppWithRole('sub', matchedOutlet.id);
                 return;
             }
 
-            // PIN tidak dikenali
+            loginErrorMsg.textContent = 'PIN tidak valid. Silakan coba lagi.';
             loginErrorMsg.classList.remove('hidden');
             loginPinInput.value = '';
             loginPinInput.focus();
         });
 
-        function enterApp() {
-            loginPinInput.value = '';
-            loginErrorMsg.classList.add('hidden');
+        function enterAppWithRole(role, outletId) {
+            currentRole = role;
+            loggedInOutletId = outletId;
+
+            if (role === 'sub' && outletId) {
+                activeOutletId = outletId;
+            } else if (!masterData.outlets.some(o => o.id === activeOutletId)) {
+                activeOutletId = masterData.outlets[0]?.id || 'outlet_2421';
+            }
+
             loginScreen.classList.add('hidden');
             appScreen.classList.remove('hidden');
-            applyRoleVisibility();
+
+            if (role === 'admin') {
+                headerRoleSubtitle.textContent = 'Administrator • Kendali Penuh & Pantau 5 Outlet';
+                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-amber-400 text-slate-900';
+                roleBadge.textContent = 'Administrator';
+                btnHeaderResetMenu.classList.remove('hidden');
+                btnHeaderResetMenu.classList.add('flex');
+                btnOpenSettings.classList.remove('hidden');
+                btnOpenSettings.classList.add('flex');
+                subAccountBanner.classList.add('hidden');
+                adminOutletsOverview.classList.remove('hidden');
+                adminOverviewDesc.textContent = 'Klik kartu outlet untuk memantau detail ceklis, mereset centang, atau mengirim laporan WA.';
+                adminOverviewResetActions.classList.remove('hidden');
+                adminOverviewResetActions.classList.add('flex');
+                adminTopControls.classList.remove('hidden');
+            } else if (role === 'viewer') {
+                headerRoleSubtitle.textContent = 'Mode Pantau Saja • 5 Outlet MOMOYO';
+                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-sky-400/25 text-sky-100 border border-sky-300/40';
+                roleBadge.textContent = 'Pemantau (View-Only)';
+                btnHeaderResetMenu.classList.add('hidden');
+                btnHeaderResetMenu.classList.remove('flex');
+                btnOpenSettings.classList.add('hidden');
+                btnOpenSettings.classList.remove('flex');
+                subBannerLabel.textContent = 'Mode Pemantau (View-Only) — Hanya melihat progres, tidak dapat mengisi atau mengedit ceklis';
+                subAccountBanner.classList.remove('hidden');
+                adminOutletsOverview.classList.remove('hidden');
+                adminOverviewDesc.textContent = 'Klik kartu outlet di bawah untuk melihat rincian progres masing-masing outlet.';
+                adminOverviewResetActions.classList.add('hidden');
+                adminOverviewResetActions.classList.remove('flex');
+                adminTopControls.classList.add('hidden');
+            } else {
+                const outlet = getOutletById(outletId);
+                headerRoleSubtitle.textContent = outlet ? outlet.name : 'Akun Outlet MOMOYO';
+                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-white/20 text-white';
+                roleBadge.textContent = 'Sub-Akun Outlet';
+                btnHeaderResetMenu.classList.add('hidden');
+                btnHeaderResetMenu.classList.remove('flex');
+                btnOpenSettings.classList.add('hidden');
+                btnOpenSettings.classList.remove('flex');
+                subBannerLabel.textContent = 'Mode Outlet — Isi Nama Checker, Centang Tugas & Kirim WhatsApp';
+                subAccountBanner.classList.remove('hidden');
+                adminOutletsOverview.classList.add('hidden');
+                adminTopControls.classList.add('hidden');
+            }
+
+            requestPeerSync();
             renderAll();
         }
 
         function logoutApp() {
             currentRole = null;
             loggedInOutletId = null;
-            activeCategoryFilter = 'all';
             appScreen.classList.add('hidden');
             loginScreen.classList.remove('hidden');
             loginPinInput.value = '';
             loginErrorMsg.classList.add('hidden');
-            setTimeout(() => loginPinInput.focus(), 50);
-        }
-
-        function applyRoleVisibility() {
-            const isAdmin = currentRole === 'admin';
-            const isViewer = currentRole === 'viewer';
-            const outlet = getOutletById(activeOutletId);
-
-            if (isAdmin) {
-                roleBadge.textContent = 'Administrator';
-                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-emerald-400/25 text-white border border-emerald-200/40';
-                headerRoleSubtitle.textContent = 'Kendali Penuh • 5 Outlet MOMOYO';
-                subAccountBanner.classList.add('hidden');
-                adminOutletsOverview.classList.remove('hidden');
-                adminOverviewDesc.textContent = 'Klik kartu outlet untuk memantau detail ceklis, mereset centang, atau mengirim laporan WA.';
-                adminOverviewResetActions.classList.remove('hidden');
-                adminTopControls.classList.remove('hidden');
-                btnHeaderResetMenu.classList.remove('hidden');
-                btnHeaderResetMenu.classList.add('flex');
-                btnOpenSettings.classList.remove('hidden');
-                btnOpenSettings.classList.add('flex');
-                inputCheckerName.disabled = false;
-                inputCheckerName.classList.remove('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
-                inputCheckerName.classList.add('bg-slate-50', 'text-slate-800');
-                checkerSaveStatus.textContent = 'Tersimpan otomatis';
-            } else if (isViewer) {
-                roleBadge.textContent = 'Pemantau (View-Only)';
-                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-sky-400/25 text-sky-50 border border-sky-200/40';
-                headerRoleSubtitle.textContent = 'Mode Pantau Saja • 5 Outlet MOMOYO';
-                subAccountBanner.className = 'bg-sky-50 border-b border-sky-200 px-4 py-2';
-                subBannerLabel.textContent = 'Mode Pemantau (View-Only) — Hanya melihat progres, tidak dapat mengisi atau mengedit ceklis';
-                subAccountBanner.classList.remove('hidden');
-                adminOutletsOverview.classList.remove('hidden');
-                adminOverviewDesc.textContent = 'Klik kartu outlet di bawah untuk melihat rincian progres masing-masing outlet.';
-                adminOverviewResetActions.classList.add('hidden');
-                adminTopControls.classList.add('hidden');
-                btnHeaderResetMenu.classList.add('hidden');
-                btnHeaderResetMenu.classList.remove('flex');
-                btnOpenSettings.classList.add('hidden');
-                btnOpenSettings.classList.remove('flex');
-                inputCheckerName.disabled = true;
-                inputCheckerName.classList.remove('bg-slate-50', 'text-slate-800');
-                inputCheckerName.classList.add('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
-                checkerSaveStatus.textContent = 'Mode Baca Saja';
-            } else {
-                roleBadge.textContent = 'Sub-Akun Outlet';
-                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-amber-400/25 text-amber-50 border border-amber-200/40';
-                headerRoleSubtitle.textContent = outlet ? outlet.name : 'Outlet MOMOYO';
-                subAccountBanner.className = 'bg-amber-50 border-b border-amber-200 px-4 py-2';
-                subBannerLabel.textContent = `${outlet ? outlet.name : 'Outlet'} — Isi Nama Checker, Ceklis & Kirim WhatsApp`;
-                subAccountBanner.classList.remove('hidden');
-                adminOutletsOverview.classList.add('hidden');
-                adminTopControls.classList.add('hidden');
-                btnHeaderResetMenu.classList.add('hidden');
-                btnHeaderResetMenu.classList.remove('flex');
-                btnOpenSettings.classList.add('hidden');
-                btnOpenSettings.classList.remove('flex');
-                inputCheckerName.disabled = false;
-                inputCheckerName.classList.remove('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
-                inputCheckerName.classList.add('bg-slate-50', 'text-slate-800');
-                checkerSaveStatus.textContent = 'Tersimpan otomatis';
-            }
+            loginPinInput.focus();
         }
 
         // =====================================================
-        // 7. RENDERING UI UTAMA
+        // 7. RENDER TAMPILAN UTAMA, KATEGORI, & PRATINJAU WA
         // =====================================================
         function renderAll() {
+            if (!currentRole) return;
             ensureOutletMaps();
-            renderStickyHeaderProgress();
+
+            if (!masterData.outlets.some(o => o.id === activeOutletId)) {
+                activeOutletId = masterData.outlets[0]?.id || 'outlet_2421';
+            }
+
+            if (currentRole === 'admin') {
+                if (document.activeElement !== inputTitle) {
+                    inputTitle.value = masterData.title || '';
+                }
+                if (document.activeElement !== inputFooter) {
+                    inputFooter.value = masterData.footer || '';
+                }
+            }
+
+            renderMainProgress();
             if (currentRole === 'admin' || currentRole === 'viewer') {
                 renderAdminOutletsOverview();
             }
-            if (currentRole === 'admin') {
-                syncAdminMasterInputs();
-            }
-            syncCheckerInput();
+            renderCheckerInput();
             renderCategoryFilterBar();
             renderCategoriesList();
-            renderWACategoryDropdown();
+            renderWaCategoryDropdown();
             renderWhatsAppPreview();
         }
 
-        function renderStickyHeaderProgress() {
+        function renderMainProgress() {
             const outlet = getOutletById(activeOutletId);
             const stats = getOverallStats(activeOutletId);
 
             activeOutletChip.textContent = outlet ? outlet.name : 'OUTLET MOMOYO';
+            visualDateLabel.textContent = `• ${formatIndonesianDate()}`;
             visualTitleHeading.textContent = masterData.title || 'CEKLIS OPERASIONAL OUTLET MOMOYO';
-            visualDateLabel.textContent = masterData.showDate ? `• ${formatIndonesianDate()}` : '';
             visualPercentBig.textContent = `${stats.percent}%`;
             visualTaskCount.textContent = `${stats.done}/${stats.total} selesai`;
 
-            // 10 segmen tab hijau
-            const filledTabs = Math.round((stats.percent / 100) * 10);
+            const activeCount = Math.round((stats.percent / 100) * 10);
             let tabsHtml = '';
             for (let i = 0; i < 10; i++) {
-                const isActive = i < filledTabs;
-                tabsHtml += `
-                    <div class="h-3 sm:h-3.5 rounded-md progress-tab ${
-                        isActive
-                            ? 'progress-tab-active'
-                            : 'bg-slate-200/90 border border-slate-300/60'
-                    }"></div>
-                `;
+                const isFilled = i < activeCount;
+                tabsHtml += `<div class="h-2.5 sm:h-3 rounded-full progress-tab ${isFilled ? 'progress-tab-active' : 'bg-slate-200'}"></div>`;
             }
             mainGreenTabsContainer.innerHTML = tabsHtml;
         }
 
         function renderAdminOutletsOverview() {
-            let cardsHtml = '';
-            masterData.outlets.forEach(outlet => {
+            outletSwitcherGrid.innerHTML = masterData.outlets.map(outlet => {
                 const stats = getOverallStats(outlet.id);
-                const checkerName = (outletCheckersMap[outlet.id] || '').trim();
+                const checker = (outletCheckersMap[outlet.id] || '').trim();
                 const isSelected = outlet.id === activeOutletId;
-                const filledMini = Math.round((stats.percent / 100) * 5);
+                const activeTabs = Math.round((stats.percent / 100) * 5);
 
-                let miniTabs = '';
+                let miniBarHtml = '';
                 for (let i = 0; i < 5; i++) {
-                    miniTabs += `<div class="h-1.5 rounded-full ${i < filledMini ? 'bg-emerald-500' : 'bg-slate-200'}"></div>`;
+                    miniBarHtml += `<div class="h-1.5 flex-1 rounded-full ${i < activeTabs ? 'bg-emerald-500' : 'bg-slate-200'}"></div>`;
                 }
 
-                cardsHtml += `
-                    <button type="button" data-select-outlet="${outlet.id}"
-                        class="text-left p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                return `
+                    <button type="button" data-select-outlet="${escapeHtml(outlet.id)}"
+                        class="text-left p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-2.5 ${
                             isSelected
-                                ? 'bg-emerald-50/80 border-emerald-500 shadow-xs'
-                                : 'bg-slate-50/70 border-slate-200/80 hover:bg-white hover:border-emerald-300'
+                                ? 'border-emerald-500 bg-emerald-50/60 shadow-xs'
+                                : 'border-slate-200/90 bg-white hover:border-emerald-300 hover:bg-slate-50/70'
                         }">
-                        <div class="flex items-start justify-between gap-1.5">
+                        <div class="flex items-start justify-between gap-2 w-full">
                             <span class="text-xs font-extrabold text-slate-800 leading-snug line-clamp-2">${escapeHtml(outlet.name)}</span>
-                            <span class="text-xs font-extrabold px-2 py-0.5 rounded-full shrink-0 ${
+                            <span class="text-xs font-extrabold px-2 py-0.5 rounded-lg shrink-0 ${
                                 stats.percent === 100
                                     ? 'bg-emerald-600 text-white'
                                     : 'bg-emerald-100 text-emerald-800'
                             }">${stats.percent}%</span>
                         </div>
-
-                        <div class="grid grid-cols-5 gap-1 w-full">
-                            ${miniTabs}
-                        </div>
-
-                        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
-                            <span class="truncate max-w-[65%]">${checkerName ? `👤 ${escapeHtml(checkerName)}` : '👤 Belum diisi'}</span>
-                            <span class="font-semibold text-slate-600 shrink-0">${stats.done}/${stats.total}</span>
+                        <div class="flex items-center gap-1 w-full">${miniBarHtml}</div>
+                        <div class="flex items-center justify-between gap-1.5 w-full text-[11px] text-slate-500">
+                            <span class="truncate flex items-center gap-1 ${checker ? 'text-slate-700 font-semibold' : 'italic text-slate-400'}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                </svg>
+                                <span class="truncate">${checker ? escapeHtml(checker) : 'Belum diisi'}</span>
+                            </span>
+                            <span class="font-bold text-slate-600 shrink-0">${stats.done}/${stats.total}</span>
                         </div>
                     </button>
                 `;
-            });
+            }).join('');
 
-            outletSwitcherGrid.innerHTML = cardsHtml;
             outletSwitcherGrid.querySelectorAll('[data-select-outlet]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     activeOutletId = btn.getAttribute('data-select-outlet');
@@ -1347,27 +1387,33 @@
             });
         }
 
-        function syncAdminMasterInputs() {
-            if (document.activeElement !== inputTitle) {
-                inputTitle.value = masterData.title || '';
-            }
-            if (document.activeElement !== inputFooter) {
-                inputFooter.value = masterData.footer || '';
-            }
-        }
-
-        function syncCheckerInput() {
+        function renderCheckerInput() {
+            const val = outletCheckersMap[activeOutletId] || '';
             if (document.activeElement !== inputCheckerName) {
-                inputCheckerName.value = outletCheckersMap[activeOutletId] || '';
+                inputCheckerName.value = val;
+            }
+            if (currentRole === 'viewer') {
+                inputCheckerName.readOnly = true;
+                inputCheckerName.classList.add('bg-slate-100', 'text-slate-600', 'cursor-not-allowed');
+                checkerSaveStatus.textContent = 'Mode Baca Saja';
+            } else {
+                inputCheckerName.readOnly = false;
+                inputCheckerName.classList.remove('bg-slate-100', 'text-slate-600', 'cursor-not-allowed');
+                checkerSaveStatus.textContent = 'Tersimpan otomatis';
             }
         }
 
         function renderCategoryFilterBar() {
+            if (activeCategoryFilter !== 'all' && !masterData.categories.some(c => c.id === activeCategoryFilter)) {
+                activeCategoryFilter = 'all';
+            }
+
+            const allActive = activeCategoryFilter === 'all';
             let html = `
                 <button type="button" data-filter-cat="all"
-                    class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
-                        activeCategoryFilter === 'all'
-                            ? 'bg-emerald-600 text-white shadow-xs'
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                        allActive
+                            ? 'bg-wa-dark text-white shadow-xs'
                             : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                     }">
                     Semua (${masterData.categories.length})
@@ -1378,10 +1424,10 @@
                 const stats = getCategoryStats(activeOutletId, cat);
                 const isActive = activeCategoryFilter === cat.id;
                 html += `
-                    <button type="button" data-filter-cat="${cat.id}"
-                        class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                    <button type="button" data-filter-cat="${escapeHtml(cat.id)}"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                             isActive
-                                ? 'bg-emerald-600 text-white shadow-xs'
+                                ? 'bg-wa-dark text-white shadow-xs'
                                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                         }">
                         ${escapeHtml(cat.name)} (${stats.done}/${stats.total})
@@ -1400,415 +1446,410 @@
         }
 
         function renderCategoriesList() {
+            const isReadOnly = currentRole === 'viewer';
             const isAdmin = currentRole === 'admin';
-            const isViewer = currentRole === 'viewer';
             const visibleCategories = activeCategoryFilter === 'all'
                 ? masterData.categories
                 : masterData.categories.filter(c => c.id === activeCategoryFilter);
 
             if (visibleCategories.length === 0) {
                 categoriesContainer.innerHTML = `
-                    <div class="bg-white rounded-3xl p-8 text-center border border-slate-200 text-slate-400 text-sm">
+                    <div class="bg-white rounded-3xl border border-slate-200 p-8 text-center text-sm text-slate-500">
                         Belum ada kategori ceklis.
                     </div>
                 `;
                 return;
             }
 
-            let html = '';
-            visibleCategories.forEach(cat => {
+            categoriesContainer.innerHTML = visibleCategories.map(cat => {
                 const stats = getCategoryStats(activeOutletId, cat);
                 const isCollapsed = !!collapsedCategories[cat.id];
-                const filledMini = Math.round((stats.percent / 100) * 5);
+                const activeMiniTabs = Math.round((stats.percent / 100) * 5);
 
-                let miniBarHtml = '';
+                let miniTabsHtml = '';
                 for (let i = 0; i < 5; i++) {
-                    miniBarHtml += `
-                        <div class="h-1.5 rounded-full transition-all ${
-                            i < filledMini ? 'bg-emerald-500' : 'bg-slate-200'
-                        }"></div>
-                    `;
+                    miniTabsHtml += `<div class="h-1.5 w-4 sm:w-5 rounded-full ${i < activeMiniTabs ? 'bg-emerald-500' : 'bg-slate-200'}"></div>`;
                 }
 
-                let tasksHtml = '';
-                (cat.tasks || []).forEach(task => {
+                const tasksHtml = (cat.tasks || []).map(task => {
                     const checked = isTaskDone(activeOutletId, task.id);
-                    tasksHtml += `
-                        <div class="group flex items-start gap-3 p-3 rounded-2xl border transition-all ${
-                            checked
-                                ? 'bg-emerald-50/60 border-emerald-200/80'
-                                : `bg-slate-50/60 border-slate-200/70 ${isViewer ? '' : 'hover:bg-white hover:border-emerald-300'}`
-                        }">
-                            <button type="button" ${isViewer ? 'disabled' : `data-toggle-task="${task.id}"`}
-                                class="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${
-                                    isViewer ? 'cursor-not-allowed opacity-85' : 'cursor-pointer'
-                                } ${
-                                    checked
-                                        ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs'
-                                        : `bg-white border-slate-300 ${isViewer ? '' : 'hover:border-emerald-500'}`
-                                }"
-                                aria-label="Status tugas">
-                                ${checked ? `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
-                            </button>
-
-                            <div class="flex-1 min-w-0">
-                                ${isAdmin ? `
-                                    <input type="text" data-edit-task-cat="${cat.id}" data-edit-task-id="${task.id}"
-                                        value="${escapeHtml(task.text)}"
-                                        class="w-full bg-transparent text-sm leading-snug font-medium focus:outline-none focus:bg-white focus:px-2 focus:py-1 focus:rounded-lg focus:ring-2 focus:ring-wa-primary/30 ${
-                                            checked ? 'line-through text-slate-400' : 'text-slate-800'
-                                        }">
-                                ` : `
-                                    <div ${isViewer ? '' : `data-toggle-task="${task.id}"`} class="text-sm leading-snug font-medium select-none ${
-                                        isViewer ? 'cursor-default' : 'cursor-pointer'
-                                    } ${
-                                        checked ? 'line-through text-slate-400' : 'text-slate-800'
-                                    }">
-                                        ${escapeHtml(task.text)}
-                                    </div>
-                                `}
-                            </div>
+                    return `
+                        <div class="group flex items-start justify-between gap-2.5 px-4 sm:px-5 py-3 hover:bg-slate-50/90 transition-colors border-t border-slate-100">
+                            <label class="flex items-start gap-3 flex-1 min-w-0 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}">
+                                <input type="checkbox" data-toggle-task="${escapeHtml(task.id)}"
+                                    ${checked ? 'checked' : ''}
+                                    ${isReadOnly ? 'disabled' : ''}
+                                    class="mt-0.5 w-5 h-5 rounded-lg border-slate-300 text-wa-primary focus:ring-wa-primary/40 shrink-0 ${isReadOnly ? 'cursor-not-allowed opacity-75' : 'cursor-pointer'}">
+                                <span class="text-xs sm:text-sm leading-relaxed break-words ${
+                                    checked ? 'line-through text-slate-400' : 'text-slate-700 font-medium'
+                                }">${escapeHtml(task.text)}</span>
+                            </label>
 
                             ${isAdmin ? `
-                                <button type="button" data-delete-task-cat="${cat.id}" data-delete-task-id="${task.id}"
-                                    class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer shrink-0"
-                                    title="Hapus item">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M3 6h18"></path>
-                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                                    </svg>
-                                </button>
+                                <div class="flex items-center gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                                    <button type="button" data-edit-task="${escapeHtml(task.id)}" data-cat-id="${escapeHtml(cat.id)}"
+                                        class="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-lg cursor-pointer" title="Edit item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                                        </svg>
+                                    </button>
+                                    <button type="button" data-delete-task="${escapeHtml(task.id)}" data-cat-id="${escapeHtml(cat.id)}"
+                                        class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg cursor-pointer" title="Hapus item">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 6h18"></path>
+                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             ` : ''}
                         </div>
                     `;
-                });
+                }).join('');
 
-                html += `
-                    <section class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
-                        <!-- Header Kartu Kategori -->
-                        <div class="px-4 sm:px-5 py-3.5 bg-slate-50/70 border-b border-slate-100 flex flex-col gap-2.5">
-                            <div class="flex items-center justify-between gap-2">
-                                <div class="flex items-center gap-2 flex-1 min-w-0">
-                                    <button type="button" data-toggle-collapse="${cat.id}"
-                                        class="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 rounded-lg transition-transform cursor-pointer shrink-0 ${isCollapsed ? '-rotate-90' : ''}"
-                                        title="Buka / Tutup kategori">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                            <polyline points="6 9 12 15 18 9"></polyline>
-                                        </svg>
-                                    </button>
+                const adminAddTaskFormHtml = isAdmin ? `
+                    <form data-add-task-form="${escapeHtml(cat.id)}" class="flex items-center gap-2 px-4 sm:px-5 py-3 bg-slate-50/80 border-t border-slate-100">
+                        <input type="text" placeholder="Tambah item tugas di kategori ini..."
+                            class="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
+                        <button type="submit"
+                            class="px-3 py-2 bg-wa-primary hover:bg-wa-dark text-white font-bold text-xs rounded-xl transition-colors cursor-pointer shrink-0">
+                            + Item
+                        </button>
+                    </form>
+                ` : '';
 
-                                    ${isAdmin ? `
-                                        <input type="text" data-edit-cat-id="${cat.id}" value="${escapeHtml(cat.name)}"
-                                            class="flex-1 min-w-0 bg-transparent text-sm sm:text-base font-extrabold text-slate-800 focus:outline-none focus:bg-white focus:px-2 focus:py-0.5 focus:rounded-lg focus:ring-2 focus:ring-wa-primary/30">
-                                    ` : `
-                                        <h3 data-toggle-collapse="${cat.id}" class="text-sm sm:text-base font-extrabold text-slate-800 truncate cursor-pointer">
-                                            ${escapeHtml(cat.name)}
-                                        </h3>
-                                    `}
+                return `
+                    <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
+                        <div class="px-4 sm:px-5 py-3.5 bg-slate-50/70 flex items-center justify-between gap-2">
+                            <button type="button" data-toggle-cat="${escapeHtml(cat.id)}"
+                                class="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500 shrink-0 transition-transform ${isCollapsed ? '-rotate-90' : ''}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="6 9 12 15 18 9"></polyline>
+                                </svg>
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 truncate">${escapeHtml(cat.name)}</h4>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <div class="flex items-center gap-1">${miniTabsHtml}</div>
+                                        <span class="text-[11px] font-bold text-emerald-700">${stats.percent}% (${stats.done}/${stats.total})</span>
+                                    </div>
                                 </div>
-
-                                <div class="flex items-center gap-2 shrink-0">
-                                    <span class="text-xs font-extrabold px-2.5 py-1 rounded-full ${
-                                        stats.percent === 100
-                                            ? 'bg-emerald-500 text-white'
-                                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                    }">
-                                        ${stats.done}/${stats.total} (${stats.percent}%)
-                                    </span>
-
-                                    ${isAdmin ? `
-                                        <button type="button" data-delete-cat="${cat.id}"
-                                            class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                            title="Hapus kategori">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M3 6h18"></path>
-                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                                            </svg>
-                                        </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-
-                            <!-- Mini Progress Bar 5 Segmen -->
-                            <div class="grid grid-cols-5 gap-1.5 pl-8">
-                                ${miniBarHtml}
-                            </div>
-                        </div>
-
-                        <!-- Isi Daftar Tugas -->
-                        <div class="${isCollapsed ? 'hidden' : 'p-4 sm:p-5 space-y-2.5'}">
-                            ${tasksHtml || '<p class="text-xs text-slate-400 italic text-center py-2">Belum ada tugas di kategori ini.</p>'}
+                            </button>
 
                             ${isAdmin ? `
-                                <form data-add-task-form="${cat.id}" class="flex gap-2 pt-2 border-t border-slate-100 mt-3">
-                                    <input type="text" placeholder="Tambah item tugas baru..."
-                                        class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary">
-                                    <button type="submit"
-                                        class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shrink-0">
-                                        + Item
+                                <div class="flex items-center gap-1 shrink-0">
+                                    <button type="button" data-rename-cat="${escapeHtml(cat.id)}"
+                                        class="p-1.5 text-slate-400 hover:text-sky-600 hover:bg-sky-50 rounded-xl cursor-pointer" title="Ubah nama kategori">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path>
+                                        </svg>
                                     </button>
-                                </form>
+                                    <button type="button" data-delete-cat="${escapeHtml(cat.id)}"
+                                        class="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl cursor-pointer" title="Hapus kategori">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M3 6h18"></path>
+                                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
                             ` : ''}
                         </div>
-                    </section>
+
+                        <div class="${isCollapsed ? 'hidden' : ''}">
+                            ${tasksHtml}
+                            ${adminAddTaskFormHtml}
+                        </div>
+                    </div>
                 `;
+            }).join('');
+
+            // Accordion toggle
+            categoriesContainer.querySelectorAll('[data-toggle-cat]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const cid = btn.getAttribute('data-toggle-cat');
+                    collapsedCategories[cid] = !collapsedCategories[cid];
+                    renderCategoriesList();
+                });
             });
 
-            categoriesContainer.innerHTML = html;
-            bindCategoryEvents();
-        }
-
-        function bindCategoryEvents() {
-            // Toggle centang tugas (Khusus Admin & Sub-Akun; terkunci untuk Pemantau)
-            categoriesContainer.querySelectorAll('[data-toggle-task]').forEach(el => {
-                el.addEventListener('click', () => {
+            // Checkbox toggle (Sub-Akun & Admin; terkunci untuk Pemantau)
+            categoriesContainer.querySelectorAll('[data-toggle-task]').forEach(chk => {
+                chk.addEventListener('change', () => {
                     if (currentRole === 'viewer') return;
-                    const taskId = el.getAttribute('data-toggle-task');
+                    const tid = chk.getAttribute('data-toggle-task');
                     const checks = getChecksForOutlet(activeOutletId);
-                    checks[taskId] = !checks[taskId];
+                    if (chk.checked) {
+                        checks[tid] = true;
+                    } else {
+                        delete checks[tid];
+                    }
                     saveOutletProgress(activeOutletId);
                     renderAll();
                 });
             });
 
-            // Toggle buka/tutup kategori
-            categoriesContainer.querySelectorAll('[data-toggle-collapse]').forEach(el => {
-                el.addEventListener('click', () => {
-                    const catId = el.getAttribute('data-toggle-collapse');
-                    collapsedCategories[catId] = !collapsedCategories[catId];
-                    renderCategoriesList();
-                });
-            });
+            // Tambah item baru (Khusus Admin)
+            categoriesContainer.querySelectorAll('[data-add-task-form]').forEach(form => {
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    if (currentRole !== 'admin') return;
+                    const cid = form.getAttribute('data-add-task-form');
+                    const input = form.querySelector('input');
+                    const text = (input?.value || '').trim();
+                    if (!text) return;
 
-            if (currentRole !== 'admin') return;
-
-            // Edit nama kategori (Admin)
-            categoriesContainer.querySelectorAll('[data-edit-cat-id]').forEach(input => {
-                input.addEventListener('change', () => {
-                    const catId = input.getAttribute('data-edit-cat-id');
-                    const newName = input.value.trim();
-                    const cat = masterData.categories.find(c => c.id === catId);
-                    if (cat && newName) {
-                        cat.name = newName;
+                    const cat = masterData.categories.find(c => c.id === cid);
+                    if (cat) {
+                        cat.tasks.push({ id: 't_' + Date.now(), text });
+                        input.value = '';
                         saveMasterConfig();
                         renderAll();
+                        showToast('Item tugas ditambahkan ke template master');
                     }
                 });
             });
 
-            // Hapus kategori (Admin)
-            categoriesContainer.querySelectorAll('[data-delete-cat]').forEach(btn => {
+            // Edit item tugas (Khusus Admin)
+            categoriesContainer.querySelectorAll('[data-edit-task]').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const catId = btn.getAttribute('data-delete-cat');
-                    const cat = masterData.categories.find(c => c.id === catId);
+                    if (currentRole !== 'admin') return;
+                    const cid = btn.getAttribute('data-cat-id');
+                    const tid = btn.getAttribute('data-edit-task');
+                    const cat = masterData.categories.find(c => c.id === cid);
+                    const task = cat?.tasks.find(t => t.id === tid);
+                    if (!task) return;
+
+                    const row = btn.closest('.group');
+                    if (!row) return;
+                    row.innerHTML = `
+                        <form class="flex items-center gap-2 w-full">
+                            <input type="text" value="${escapeHtml(task.text)}"
+                                class="flex-1 px-3 py-1.5 bg-white border border-sky-300 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400">
+                            <button type="submit" class="px-3 py-1.5 bg-sky-600 text-white text-xs font-bold rounded-xl cursor-pointer">Simpan</button>
+                            <button type="button" data-cancel-inline class="px-2.5 py-1.5 bg-slate-100 text-slate-600 text-xs font-semibold rounded-xl cursor-pointer">Batal</button>
+                        </form>
+                    `;
+                    const inlineForm = row.querySelector('form');
+                    const inlineInput = row.querySelector('input');
+                    inlineInput.focus();
+                    row.querySelector('[data-cancel-inline]').addEventListener('click', renderCategoriesList);
+                    inlineForm.addEventListener('submit', (ev) => {
+                        ev.preventDefault();
+                        const newText = inlineInput.value.trim();
+                        if (!newText) return;
+                        task.text = newText;
+                        saveMasterConfig();
+                        renderAll();
+                        showToast('Item tugas diperbarui');
+                    });
+                });
+            });
+
+            // Hapus item tugas (Khusus Admin)
+            categoriesContainer.querySelectorAll('[data-delete-task]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (currentRole !== 'admin') return;
+                    const cid = btn.getAttribute('data-cat-id');
+                    const tid = btn.getAttribute('data-delete-task');
+                    const cat = masterData.categories.find(c => c.id === cid);
                     if (!cat) return;
+
                     openConfirmModal(
-                        'Hapus Kategori',
-                        `Hapus kategori "${cat.name}" beserta seluruh item di dalamnya dari semua outlet?`,
+                        'Hapus Item Tugas',
+                        'Hapus item tugas ini dari template master semua outlet?',
                         () => {
-                            masterData.categories = masterData.categories.filter(c => c.id !== catId);
-                            if (activeCategoryFilter === catId) activeCategoryFilter = 'all';
+                            cat.tasks = cat.tasks.filter(t => t.id !== tid);
                             saveMasterConfig();
                             renderAll();
-                            showToast('Kategori dihapus');
+                            showToast('Item tugas dihapus');
                         },
                         'bg-rose-600 hover:bg-rose-700'
                     );
                 });
             });
 
-            // Edit teks tugas (Admin)
-            categoriesContainer.querySelectorAll('[data-edit-task-id]').forEach(input => {
-                input.addEventListener('change', () => {
-                    const catId = input.getAttribute('data-edit-task-cat');
-                    const taskId = input.getAttribute('data-edit-task-id');
-                    const newText = input.value.trim();
-                    const cat = masterData.categories.find(c => c.id === catId);
-                    const task = cat?.tasks?.find(t => t.id === taskId);
-                    if (task && newText) {
-                        task.text = newText;
-                        saveMasterConfig();
-                        renderWhatsAppPreview();
-                    }
-                });
-            });
-
-            // Hapus tugas (Admin)
-            categoriesContainer.querySelectorAll('[data-delete-task-id]').forEach(btn => {
+            // Ubah nama kategori (Khusus Admin)
+            categoriesContainer.querySelectorAll('[data-rename-cat]').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    const catId = btn.getAttribute('data-delete-task-cat');
-                    const taskId = btn.getAttribute('data-delete-task-id');
-                    const cat = masterData.categories.find(c => c.id === catId);
+                    if (currentRole !== 'admin') return;
+                    const cid = btn.getAttribute('data-rename-cat');
+                    const cat = masterData.categories.find(c => c.id === cid);
                     if (!cat) return;
-                    cat.tasks = cat.tasks.filter(t => t.id !== taskId);
-                    saveMasterConfig();
-                    renderAll();
-                    showToast('Item tugas dihapus');
-                });
-            });
 
-            // Tambah tugas baru ke kategori (Admin)
-            categoriesContainer.querySelectorAll('[data-add-task-form]').forEach(form => {
-                form.addEventListener('submit', (e) => {
-                    e.preventDefault();
-                    const catId = form.getAttribute('data-add-task-form');
-                    const input = form.querySelector('input');
-                    const text = (input?.value || '').trim();
-                    if (!text) return;
-                    const cat = masterData.categories.find(c => c.id === catId);
-                    if (cat) {
-                        cat.tasks.push({
-                            id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
-                            text
-                        });
+                    const headerBox = btn.closest('.bg-slate-50\\/70');
+                    if (!headerBox) return;
+                    headerBox.innerHTML = `
+                        <form class="flex items-center gap-2 w-full">
+                            <input type="text" value="${escapeHtml(cat.name)}"
+                                class="flex-1 px-3 py-1.5 bg-white border border-sky-300 rounded-xl text-xs sm:text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-400">
+                            <button type="submit" class="px-3 py-1.5 bg-sky-600 text-white text-xs font-bold rounded-xl cursor-pointer">Simpan</button>
+                            <button type="button" data-cancel-cat-rename class="px-2.5 py-1.5 bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl cursor-pointer">Batal</button>
+                        </form>
+                    `;
+                    const f = headerBox.querySelector('form');
+                    const inp = headerBox.querySelector('input');
+                    inp.focus();
+                    headerBox.querySelector('[data-cancel-cat-rename]').addEventListener('click', renderCategoriesList);
+                    f.addEventListener('submit', (ev) => {
+                        ev.preventDefault();
+                        const newName = inp.value.trim();
+                        if (!newName) return;
+                        cat.name = newName.toUpperCase();
                         saveMasterConfig();
                         renderAll();
-                        showToast('Item tugas ditambahkan');
-                    }
+                        showToast('Nama kategori diperbarui');
+                    });
+                });
+            });
+
+            // Hapus kategori (Khusus Admin)
+            categoriesContainer.querySelectorAll('[data-delete-cat]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (currentRole !== 'admin') return;
+                    const cid = btn.getAttribute('data-delete-cat');
+                    const cat = masterData.categories.find(c => c.id === cid);
+                    if (!cat) return;
+
+                    openConfirmModal(
+                        'Hapus Kategori',
+                        `Hapus kategori "${cat.name}" beserta seluruh item tugas di dalamnya?`,
+                        () => {
+                            masterData.categories = masterData.categories.filter(c => c.id !== cid);
+                            saveMasterConfig();
+                            renderAll();
+                            showToast('Kategori berhasil dihapus');
+                        },
+                        'bg-rose-600 hover:bg-rose-700'
+                    );
                 });
             });
         }
 
-        function renderWACategoryDropdown() {
+        function renderWaCategoryDropdown() {
             const currentVal = waCategoryFilter.value || 'all';
-            let optionsHtml = `<option value="all">Semua Kategori (${masterData.categories.length})</option>`;
+            let opts = `<option value="all">Semua Kategori (${masterData.categories.length})</option>`;
             masterData.categories.forEach(cat => {
-                optionsHtml += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+                opts += `<option value="${escapeHtml(cat.id)}">${escapeHtml(cat.name)}</option>`;
             });
-            waCategoryFilter.innerHTML = optionsHtml;
-            if ([...waCategoryFilter.options].some(o => o.value === currentVal)) {
+            waCategoryFilter.innerHTML = opts;
+            if (currentVal === 'all' || masterData.categories.some(c => c.id === currentVal)) {
                 waCategoryFilter.value = currentVal;
-            } else {
-                waCategoryFilter.value = 'all';
             }
         }
 
         function generateWhatsAppText() {
             const outlet = getOutletById(activeOutletId);
-            const checkerName = (outletCheckersMap[activeOutletId] || '').trim();
-            const selectedScope = waCategoryFilter.value || 'all';
-
-            const targetCategories = selectedScope === 'all'
+            const selectedCatId = waCategoryFilter.value || 'all';
+            const targetCategories = selectedCatId === 'all'
                 ? masterData.categories
-                : masterData.categories.filter(c => c.id === selectedScope);
+                : masterData.categories.filter(c => c.id === selectedCatId);
 
-            let totalTasks = 0;
-            let doneTasks = 0;
+            let total = 0;
+            let done = 0;
             targetCategories.forEach(cat => {
-                (cat.tasks || []).forEach(task => {
-                    totalTasks++;
-                    if (isTaskDone(activeOutletId, task.id)) doneTasks++;
+                (cat.tasks || []).forEach(t => {
+                    total++;
+                    if (isTaskDone(activeOutletId, t.id)) done++;
                 });
             });
-            const percent = totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
-            const greenBar = buildGreenTabString(doneTasks, totalTasks);
+
+            const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+            const greenBar = buildGreenTabString(done, total);
+            const checker = (outletCheckersMap[activeOutletId] || '').trim();
 
             const lines = [];
-            lines.push(`*${(masterData.title || 'CEKLIS OPERASIONAL OUTLET').toUpperCase()}*`);
+            lines.push(`*${(masterData.title || 'CEKLIS OPERASIONAL OUTLET MOMOYO').trim()}*`);
             if (outlet) {
                 lines.push(`🏪 *${outlet.name}*`);
-            }
-            if (checkerName) {
-                lines.push(`👤 Checker: *${checkerName}*`);
             }
             if (masterData.showDate) {
                 lines.push(`📅 ${formatIndonesianDate()}`);
             }
+            if (checker) {
+                lines.push(`👤 Checker: *${checker}*`);
+            }
             lines.push('');
-            lines.push(`Progres: ${greenBar} *${percent}%* (${doneTasks}/${totalTasks})`);
-            lines.push('');
+            lines.push(`Progres: ${greenBar} *${percent}%* (${done}/${total})`);
 
             targetCategories.forEach(cat => {
                 const cStats = getCategoryStats(activeOutletId, cat);
+                lines.push('');
                 lines.push(`*${cat.name}*`);
                 if (masterData.showCategoryBarsInWA) {
-                    const catBar = buildGreenTabString(cStats.done, cStats.total);
-                    lines.push(`${catBar} ${cStats.percent}% (${cStats.done}/${cStats.total})`);
+                    lines.push(`${buildGreenTabString(cStats.done, cStats.total)} ${cStats.percent}% (${cStats.done}/${cStats.total})`);
                 }
                 (cat.tasks || []).forEach(task => {
-                    const done = isTaskDone(activeOutletId, task.id);
-                    const icon = done ? '✅' : '⬜';
-                    const formattedText = (done && masterData.strikethrough)
-                        ? `~${task.text}~`
-                        : task.text;
-                    lines.push(`${icon} ${formattedText}`);
+                    const checked = isTaskDone(activeOutletId, task.id);
+                    const icon = checked ? '✅' : '⬜';
+                    const label = (checked && masterData.strikethrough) ? `~${task.text}~` : task.text;
+                    lines.push(`${icon} ${label}`);
                 });
-                lines.push('');
             });
 
-            if (masterData.footer && masterData.footer.trim()) {
-                lines.push(`_${masterData.footer.trim()}_`);
+            const footerText = (masterData.footer || '').trim();
+            if (footerText) {
+                lines.push('');
+                lines.push(`_${footerText}_`);
             }
 
-            return {
-                text: lines.join('\n').trim(),
-                percent
-            };
+            return { text: lines.join('\n'), percent };
         }
 
         function renderWhatsAppPreview() {
             const outlet = getOutletById(activeOutletId);
             const { text, percent } = generateWhatsAppText();
-            previewOutletSub.textContent = `${outlet ? outlet.name : 'MOMOYO'} • Tab Hijau 🟩`;
+            previewOutletSub.textContent = `${outlet ? outlet.name : 'OUTLET'} • Tab Hijau 🟩`;
             previewPercentBadge.textContent = `${percent}%`;
             waPreviewContent.textContent = text;
         }
 
         // =====================================================
-        // 8. MODAL PENGATURAN & RESET (ADMINISTRATOR)
+        // 8. PENGATURAN ADMINISTRATOR & RESET HARIAN
         // =====================================================
+        function updateWaScaleButtonsUI() {
+            document.querySelectorAll('.wa-scale-btn').forEach(btn => {
+                const scale = btn.getAttribute('data-wa-scale');
+                if (scale === tempWaBarScale) {
+                    btn.classList.add('border-wa-primary', 'bg-emerald-50/70');
+                    btn.classList.remove('border-slate-200', 'bg-white');
+                } else {
+                    btn.classList.remove('border-wa-primary', 'bg-emerald-50/70');
+                    btn.classList.add('border-slate-200', 'bg-white');
+                }
+            });
+        }
+
         function openSettingsModal() {
             if (currentRole !== 'admin') return;
             settingsErrorMsg.classList.add('hidden');
-            inputAdminPin.value = masterData.adminPin || '1234';
             inputAdminPin.type = 'password';
-            inputViewerPin.value = masterData.viewerPin || '202611';
             inputViewerPin.type = 'password';
+            inputAdminPin.value = masterData.adminPin || '1234';
+            inputViewerPin.value = masterData.viewerPin || '202611';
+            tempWaBarScale = masterData.waBarScale || '10';
             settingAutoDate.checked = !!masterData.showDate;
             settingStrikethrough.checked = !!masterData.strikethrough;
             settingCategoryBars.checked = !!masterData.showCategoryBarsInWA;
-            tempWaBarScale = masterData.waBarScale || '10';
-            updateWaScaleButtonsUI();
-            renderSettingsOutletsList();
 
-            settingsModal.classList.remove('hidden');
-            settingsModal.classList.add('flex');
-        }
-
-        function closeSettingsModal() {
-            settingsModal.classList.add('hidden');
-            settingsModal.classList.remove('flex');
-        }
-
-        function renderSettingsOutletsList() {
-            let html = '';
-            masterData.outlets.forEach((outlet, index) => {
-                html += `
-                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
-                        <div class="sm:col-span-8">
-                            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nama Outlet #${index + 1}</label>
-                            <input type="text" data-setting-outlet-name="${outlet.id}" value="${escapeHtml(outlet.name)}"
-                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
-                        </div>
-                        <div class="sm:col-span-4">
-                            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">PIN Akses</label>
-                            <div class="relative flex items-center">
-                                <input type="password" inputmode="numeric" maxlength="10" data-setting-outlet-pin="${outlet.id}" value="${escapeHtml(outlet.pin)}"
-                                    class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
-                                <button type="button" data-toggle-outlet-pin="${outlet.id}" class="absolute right-2 text-slate-400 hover:text-slate-700 cursor-pointer" title="Lihat PIN">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+            settingsOutletsList.innerHTML = masterData.outlets.map(outlet => `
+                <div class="grid grid-cols-12 gap-2 items-center bg-slate-50 border border-slate-200 rounded-2xl p-2.5">
+                    <div class="col-span-8">
+                        <input type="text" data-setting-outlet-name="${escapeHtml(outlet.id)}" value="${escapeHtml(outlet.name)}"
+                            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
                     </div>
-                `;
-            });
-            settingsOutletsList.innerHTML = html;
+                    <div class="col-span-4 relative flex items-center">
+                        <input type="password" inputmode="numeric" maxlength="10" data-setting-outlet-pin="${escapeHtml(outlet.id)}" value="${escapeHtml(outlet.pin)}"
+                            class="w-full pl-2.5 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
+                        <button type="button" data-toggle-outlet-pin="${escapeHtml(outlet.id)}"
+                            class="absolute right-2 text-slate-400 hover:text-slate-700 cursor-pointer" title="Tampilkan / Sembunyikan PIN">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                <circle cx="12" cy="12" r="3"></circle>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
 
             settingsOutletsList.querySelectorAll('[data-toggle-outlet-pin]').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -1819,17 +1860,15 @@
                     }
                 });
             });
+
+            updateWaScaleButtonsUI();
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
         }
 
-        function updateWaScaleButtonsUI() {
-            document.querySelectorAll('.wa-scale-btn').forEach(btn => {
-                const scale = btn.getAttribute('data-wa-scale');
-                if (scale === tempWaBarScale) {
-                    btn.className = 'wa-scale-btn p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/70 text-left transition-all cursor-pointer';
-                } else {
-                    btn.className = 'wa-scale-btn p-3 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 text-left transition-all cursor-pointer';
-                }
-            });
+        function closeSettingsModal() {
+            settingsModal.classList.add('hidden');
+            settingsModal.classList.remove('flex');
         }
 
         function handleSaveSettings(e) {
@@ -1962,6 +2001,21 @@
         // =====================================================
         // 9. EVENT LISTENERS GLOBAL
         // =====================================================
+        btnForceSync.addEventListener('click', () => {
+            requestPeerSync();
+            showToast('Menyinkronkan data terbaru antar perangkat...');
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                requestPeerSync();
+            }
+        });
+
+        window.addEventListener('online', () => {
+            requestPeerSync();
+        });
+
         btnLogout.addEventListener('click', logoutApp);
 
         btnHeaderResetMenu.addEventListener('click', openResetMenuModal);

@@ -10,6 +10,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Pustaka Sinkronisasi Real-Time Otomatis -->
+    <script src="https://cdn.jsdelivr.net/npm/mqtt@5.3.4/dist/mqtt.min.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -810,13 +812,13 @@
         let saveCheckerTimer = null;
         let toastTimeout = null;
 
-        // =====================================================
-        // 3. REFERENSI ELEMEN DOM
-        // =====================================================
-        const loginScreen = document.getElementById('loginScreen');
-        const appScreen = document.getElementById('appScreen');
-        const loginForm = document.getElementById('loginForm');
-        const loginPinInput = document.getElementById('loginPinInput');
+        // Built-in Real-Time Sync (Otomatis untuk GitHub Pages tanpa konfigurasi manual)
+        const CLIENT_ID = 'client_' + Math.random().toString(36).slice(2, 10);
+        const RT_TOPIC_PREFIX = 'momoyo/tity2ruby-spec/ceklis-momoyo/v2';
+        let mqttClient = null;
+        let useBuiltinRealtime = false;
+        let masterUpdatedAt = 0;
+        let outletUpdatedAtMap = {};
         const loginErrorMsg = document.getElementById('loginErrorMsg');
         const loginSyncStatus = document.getElementById('loginSyncStatus');
 
@@ -1048,7 +1050,7 @@
                 const resolved = resolveCloudConfig();
                 if (!resolved.config) {
                     useCloudSync = false;
-                    updateSyncStatusUI(false, 'Siap digunakan (Penyimpanan Lokal)');
+                    initBuiltinRealtimeSync();
                     return;
                 }
 
@@ -1117,23 +1119,151 @@
                 });
 
             } catch (error) {
-                console.warn('Fallback ke penyimpanan lokal:', error);
+                console.warn('Fallback ke sinkronisasi otomatis bawaan:', error);
                 useCloudSync = false;
-                updateSyncStatusUI(false, 'Siap digunakan (Penyimpanan Lokal)');
+                initBuiltinRealtimeSync();
             }
+        }
+
+        // Sinkronisasi Real-Time Otomatis Bawaan (Tanpa perlu setup akun/config)
+        function initBuiltinRealtimeSync() {
+            if (typeof window.mqtt === 'undefined') {
+                useBuiltinRealtime = false;
+                updateSyncStatusUI(false, 'Siap digunakan (Penyimpanan Lokal)');
+                return;
+            }
+
+            if (mqttClient) {
+                try { mqttClient.end(true); } catch (_) {}
+                mqttClient = null;
+            }
+
+            const brokers = [
+                'wss://broker.emqx.io:8084/mqtt',
+                'wss://broker.hivemq.com:8884/mqtt'
+            ];
+            let brokerIdx = 0;
+
+            const connectBroker = (url) => {
+                updateSyncStatusUI(false, 'Menghubungkan ke server real-time...');
+                const client = window.mqtt.connect(url, {
+                    clientId: 'momoyo_' + Math.random().toString(36).slice(2, 10),
+                    clean: true,
+                    connectTimeout: 8000,
+                    reconnectPeriod: 3000
+                });
+
+                mqttClient = client;
+
+                client.on('connect', () => {
+                    useBuiltinRealtime = true;
+                    updateSyncStatusUI(true, 'Terhubung ke server real-time');
+                    client.subscribe(`${RT_TOPIC_PREFIX}/#`, { qos: 1 }, (err) => {
+                        if (!err) {
+                            // Kirim state awal jika belum ada data di server setelah 1.8 detik
+                            setTimeout(() => {
+                                if (masterUpdatedAt === 0 && useBuiltinRealtime && client.connected) {
+                                    publishRealtimeMaster();
+                                }
+                            }, 1800);
+                        }
+                    });
+                });
+
+                client.on('message', (topic, payloadBuffer) => {
+                    try {
+                        const raw = payloadBuffer.toString();
+                        if (!raw) return;
+                        const data = JSON.parse(raw);
+                        if (!data || data.clientId === CLIENT_ID) return;
+
+                        if (topic === `${RT_TOPIC_PREFIX}/master`) {
+                            const incomingTs = Number(data.updatedAt) || 1;
+                            if (incomingTs >= masterUpdatedAt) {
+                                masterUpdatedAt = incomingTs;
+                                masterData = {
+                                    ...createDefaultMasterConfig(),
+                                    ...data,
+                                    outlets: Array.isArray(data.outlets) && data.outlets.length ? data.outlets : createDefaultOutlets(),
+                                    categories: Array.isArray(data.categories) ? data.categories : createDefaultCategories()
+                                };
+                                ensureOutletMaps();
+                                saveToLocalStorage();
+                                if (currentRole) renderAll();
+                            }
+                        } else if (topic.startsWith(`${RT_TOPIC_PREFIX}/outlet/`)) {
+                            const oId = topic.replace(`${RT_TOPIC_PREFIX}/outlet/`, '');
+                            const incomingTs = Number(data.updatedAt) || 1;
+                            const localTs = outletUpdatedAtMap[oId] || 0;
+                            if (incomingTs >= localTs) {
+                                outletUpdatedAtMap[oId] = incomingTs;
+                                outletChecksMap[oId] = data.checks && typeof data.checks === 'object' ? data.checks : {};
+                                outletCheckersMap[oId] = typeof data.checkerName === 'string' ? data.checkerName : '';
+                                saveToLocalStorage();
+                                if (currentRole) renderAll();
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Gagal memproses pesan real-time:', e);
+                    }
+                });
+
+                client.on('error', () => {
+                    if (!useBuiltinRealtime && brokerIdx + 1 < brokers.length) {
+                        try { client.end(true); } catch (_) {}
+                        brokerIdx++;
+                        connectBroker(brokers[brokerIdx]);
+                    }
+                });
+
+                client.on('offline', () => {
+                    updateSyncStatusUI(false, 'Menyambung ulang ke server...');
+                });
+            };
+
+            connectBroker(brokers[brokerIdx]);
+        }
+
+        function publishRealtimeMaster() {
+            if (!useBuiltinRealtime || !mqttClient || !mqttClient.connected) return;
+            const ts = Date.now();
+            masterUpdatedAt = ts;
+            const payload = JSON.stringify({
+                ...masterData,
+                updatedAt: ts,
+                clientId: CLIENT_ID
+            });
+            mqttClient.publish(`${RT_TOPIC_PREFIX}/master`, payload, { retain: true, qos: 1 });
+        }
+
+        function publishRealtimeOutlet(outletId) {
+            if (!useBuiltinRealtime || !mqttClient || !mqttClient.connected) return;
+            const ts = Date.now();
+            outletUpdatedAtMap[outletId] = ts;
+            const payload = JSON.stringify({
+                checks: outletChecksMap[outletId] || {},
+                checkerName: outletCheckersMap[outletId] || '',
+                updatedAt: ts,
+                clientId: CLIENT_ID
+            });
+            mqttClient.publish(`${RT_TOPIC_PREFIX}/outlet/${outletId}`, payload, { retain: true, qos: 1 });
         }
 
         // Simpan Master Config (debounced untuk ketikan, langsung untuk aksi tombol)
         function saveMasterConfig(immediate = false) {
             saveToLocalStorage();
-            if (!useCloudSync || !masterDocRef) return;
 
             if (saveMasterTimer) clearTimeout(saveMasterTimer);
             const execSave = async () => {
-                try {
-                    await setDoc(masterDocRef, { ...masterData, updatedAt: Date.now() }, { merge: true });
-                } catch (err) {
-                    console.error('Gagal menyimpan master ke cloud:', err);
+                if (useBuiltinRealtime) {
+                    publishRealtimeMaster();
+                }
+                if (useCloudSync && masterDocRef) {
+                    try {
+                        await setDoc(masterDocRef, { ...masterData, updatedAt: Date.now() }, { merge: true });
+                    } catch (err) {
+                        console.error('Gagal menyimpan master ke cloud:', err);
+                    }
                 }
             };
 
@@ -1147,6 +1277,11 @@
         // Simpan Progres (centang + nama checker) untuk satu outlet
         async function saveOutletProgress(outletId) {
             saveToLocalStorage();
+
+            if (useBuiltinRealtime) {
+                publishRealtimeOutlet(outletId);
+            }
+
             if (!useCloudSync || !db) return;
 
             try {
@@ -1903,7 +2038,8 @@
             } else {
                 inputCloudConfigJson.value = '';
             }
-            updateSyncStatusUI(useCloudSync, useCloudSync ? 'Terhubung ke server real-time' : 'Mode Lokal');
+            const isOnlineAny = useCloudSync || useBuiltinRealtime;
+            updateSyncStatusUI(isOnlineAny, isOnlineAny ? 'Terhubung ke server real-time' : 'Mode Lokal');
 
             // Render input Nama & PIN untuk 5 outlet
             let listHtml = '';

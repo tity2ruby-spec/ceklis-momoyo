@@ -197,7 +197,7 @@
             </div>
         </header>
 
-        <!-- Banner Indikator Khusus Sub-Akun Outlet -->
+        <!-- Banner Indikator Khusus Sub-Akun Outlet & Pemantau -->
         <div id="subAccountBanner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2">
             <div class="max-w-7xl mx-auto flex items-center justify-center sm:justify-between gap-2 text-xs text-amber-900">
                 <div class="flex items-center gap-2 font-bold">
@@ -246,7 +246,7 @@
         <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 space-y-6">
 
             <!-- =====================================================
-                 PANEL RINGKASAN & SWITCHER 5 OUTLET (KHUSUS ADMIN)
+                 PANEL RINGKASAN & SWITCHER 5 OUTLET (ADMIN & PEMANTAU)
             ====================================================== -->
             <section id="adminOutletsOverview" class="hidden bg-white rounded-3xl shadow-sm border border-emerald-200/80 p-4 sm:p-5 space-y-3.5">
                 <div class="flex flex-wrap items-center justify-between gap-2">
@@ -255,9 +255,9 @@
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                             <span>Ringkasan Progres 5 Outlet (Real-Time)</span>
                         </h3>
-                        <p class="text-xs text-slate-500 mt-0.5">Klik kartu outlet untuk memantau detail ceklis, mereset centang, atau mengirim laporan WA.</p>
+                        <p id="adminOverviewDesc" class="text-xs text-slate-500 mt-0.5">Klik kartu outlet untuk memantau detail ceklis, mereset centang, atau mengirim laporan WA.</p>
                     </div>
-                    <div class="flex items-center gap-2">
+                    <div id="adminOverviewResetActions" class="flex items-center gap-2">
                         <button id="btnResetSelectedOutlet" type="button"
                             class="px-3 py-1.5 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl transition-colors cursor-pointer">
                             Reset Outlet Ini
@@ -280,7 +280,7 @@
                 ================================================== -->
                 <div class="lg:col-span-7 space-y-5">
 
-                    <!-- Panel Input Custom Nama Checker (Bisa Diisi Admin & Sub-Akun) -->
+                    <!-- Panel Input Custom Nama Checker (Bisa Diisi Admin & Sub-Akun; Read-Only untuk Pemantau) -->
                     <section id="checkerNameCard" class="bg-white rounded-3xl shadow-sm border border-emerald-200/80 p-4 sm:p-5">
                         <div class="flex items-center justify-between gap-2 mb-2">
                             <label for="inputCheckerName" class="text-xs font-extrabold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
@@ -435,7 +435,7 @@
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                 <div>
                     <h3 class="text-lg font-extrabold text-slate-800">Pengaturan Administrator</h3>
-                    <p class="text-xs text-slate-500">Kelola PIN Admin, 5 Akun Outlet, dan format pesan WhatsApp</p>
+                    <p class="text-xs text-slate-500">Kelola PIN Admin, PIN Pemantau, 5 Akun Outlet, dan format WhatsApp</p>
                 </div>
                 <button id="btnCloseSettings" type="button" class="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -446,18 +446,34 @@
             </div>
 
             <form id="settingsForm" class="space-y-5">
-                <!-- PIN Administrator -->
-                <div class="bg-emerald-50/60 border border-emerald-200/70 rounded-2xl p-4 space-y-2">
-                    <label for="inputAdminPin" class="block text-xs font-extrabold uppercase tracking-wider text-emerald-900">PIN Administrator</label>
-                    <div class="relative flex items-center">
-                        <input type="password" id="inputAdminPin" inputmode="numeric" maxlength="10" required
-                            class="w-full pl-3.5 pr-10 py-2.5 bg-white border border-emerald-200 rounded-xl text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary">
-                        <button type="button" id="btnToggleAdminPin" class="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700 cursor-pointer" title="Tampilkan / Sembunyikan PIN">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                                <circle cx="12" cy="12" r="3"></circle>
-                            </svg>
-                        </button>
+                <!-- PIN Administrator & PIN Pemantau (View-Only) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-emerald-50/60 border border-emerald-200/70 rounded-2xl p-4 space-y-2">
+                        <label for="inputAdminPin" class="block text-xs font-extrabold uppercase tracking-wider text-emerald-900">PIN Administrator</label>
+                        <div class="relative flex items-center">
+                            <input type="password" id="inputAdminPin" inputmode="numeric" maxlength="10" required
+                                class="w-full pl-3.5 pr-10 py-2.5 bg-white border border-emerald-200 rounded-xl text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary">
+                            <button type="button" id="btnToggleAdminPin" class="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700 cursor-pointer" title="Tampilkan / Sembunyikan PIN">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-sky-50/70 border border-sky-200/80 rounded-2xl p-4 space-y-2">
+                        <label for="inputViewerPin" class="block text-xs font-extrabold uppercase tracking-wider text-sky-900">PIN Pemantau (View-Only)</label>
+                        <div class="relative flex items-center">
+                            <input type="password" id="inputViewerPin" inputmode="numeric" maxlength="10" required
+                                class="w-full pl-3.5 pr-10 py-2.5 bg-white border border-sky-200 rounded-xl text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500/40 focus:border-sky-500">
+                            <button type="button" id="btnToggleViewerPin" class="absolute right-2.5 p-1 text-slate-400 hover:text-slate-700 cursor-pointer" title="Tampilkan / Sembunyikan PIN">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -533,64 +549,6 @@
                     </button>
                 </div>
             </form>
-
-            <!-- Koneksi Server Real-Time untuk Hosting GitHub Pages -->
-            <div class="border-t border-slate-200 pt-4 space-y-3">
-                <div class="flex items-center justify-between gap-2">
-                    <div>
-                        <div class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Koneksi Server Real-Time (GitHub Pages)</div>
-                        <p class="text-[11px] text-slate-500 mt-0.5">Hubungkan 1 database cloud agar 5 HP outlet & Admin saling tersinkronisasi.</p>
-                    </div>
-                    <span id="settingsCloudStatusBadge" class="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 shrink-0">
-                        Mode Lokal
-                    </span>
-                </div>
-
-                <div>
-                    <textarea id="inputCloudConfigJson" rows="4"
-                        placeholder='Tempel konfigurasi server di sini (contoh: { apiKey: "...", authDomain: "...", projectId: "..." })'
-                        class="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40 focus:border-wa-primary"></textarea>
-                    <p id="cloudConfigFeedback" class="hidden text-xs font-semibold mt-1.5"></p>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button id="btnSaveCloudConfig" type="button"
-                        class="py-2.5 px-3.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2v4"></path>
-                            <path d="m16.2 7.8 2.9-2.9"></path>
-                            <path d="M18 12h4"></path>
-                            <path d="m16.2 16.2 2.9 2.9"></path>
-                            <path d="M12 18v4"></path>
-                            <path d="m4.9 19.1 2.9-2.9"></path>
-                            <path d="M2 12h4"></path>
-                            <path d="m4.9 4.9 2.9 2.9"></path>
-                        </svg>
-                        <span>Hubungkan Server</span>
-                    </button>
-
-                    <button id="btnDownloadGitHubHtml" type="button"
-                        class="py-2.5 px-3.5 text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        <span>Unduh index.html Siap GitHub</span>
-                    </button>
-                </div>
-
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <button id="btnCopyOutletShareLink" type="button"
-                        class="py-2 px-3 text-[11px] font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition-colors cursor-pointer">
-                        Salin Link Terhubung untuk 5 Outlet
-                    </button>
-                    <button id="btnClearCloudConfig" type="button"
-                        class="py-2 px-3 text-[11px] font-semibold text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-xl transition-colors cursor-pointer">
-                        Reset Koneksi Server
-                    </button>
-                </div>
-            </div>
 
             <!-- Zona Pemeliharaan Template -->
             <div class="border-t border-slate-200 pt-4 space-y-2.5">
@@ -668,23 +626,16 @@
     </div>
 
     <!-- =========================================================
-         SCRIPT UTAMA (FIREBASE REAL-TIME 5 OUTLET + LOGIKA)
+         SCRIPT UTAMA (SINKRONISASI REAL-TIME 5 OUTLET + 3 PERAN)
     ========================================================== -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
+    <script>
         // =====================================================
         // 1. DATA BAWAAN: 5 OUTLET MOMOYO & 4 KATEGORI (40 ITEM)
         // =====================================================
         const LOCAL_MASTER_KEY = 'momoyo_checklist_master_v2';
         const LOCAL_PROGRESS_KEY = 'momoyo_checklist_progress_v2';
-        const LOCAL_CLOUD_CFG_KEY = 'momoyo_custom_cloud_cfg_v2';
-
-        /* __CLOUD_CONFIG_START__ */
-        const EMBEDDED_CLOUD_CONFIG = null;
-        /* __CLOUD_CONFIG_END__ */
+        const MQTT_TOPIC_PREFIX = 'momoyo_ops_live_sync_v2_tity2ruby';
+        const CLIENT_SESSION_ID = 'client_' + Math.random().toString(36).slice(2, 10);
 
         function createDefaultOutlets() {
             return [
@@ -774,6 +725,7 @@
                 showCategoryBarsInWA: true,
                 waBarScale: '10',
                 adminPin: '1234',
+                viewerPin: '202611',
                 outlets: createDefaultOutlets(),
                 categories: createDefaultCategories()
             };
@@ -790,47 +742,39 @@
             outletCheckersMap[o.id] = '';
         });
 
-        let currentRole = null;             // 'admin' | 'sub' | null
+        let currentRole = null;             // 'admin' | 'viewer' | 'sub' | null
         let loggedInOutletId = null;        // ID outlet jika login sebagai Sub-Akun
         let activeOutletId = 'outlet_2421'; // Outlet yang sedang dilihat/diisi
-        let activeCategoryFilter = 'all';
-        let waSelectedCategory = 'all';
-        let collapsedCategories = new Set();
+        let activeCategoryFilter = 'all';   // Filter tampilan kategori di kolom kiri
+        let collapsedCategories = {};       // Status buka/tutup accordion per kategori
         let tempWaBarScale = '10';
-        let pendingConfirmAction = null;
+        let confirmCallback = null;
+        let checkerSaveTimer = null;
+        let masterSaveTimer = null;
 
-        // Firebase References
-        let db = null;
-        let auth = null;
-        let currentUser = null;
-        let useCloudSync = false;
-        let appIdGlobal = 'default-app-id';
-        let masterDocRef = null;
-        let unsubscribeMaster = null;
-        let unsubscribeProgress = null;
-        let saveMasterTimer = null;
-        let saveCheckerTimer = null;
-        let toastTimeout = null;
-
-        // Built-in Real-Time Sync (Otomatis untuk GitHub Pages tanpa konfigurasi manual)
-        const CLIENT_ID = 'client_' + Math.random().toString(36).slice(2, 10);
-        const RT_TOPIC_PREFIX = 'momoyo/tity2ruby-spec/ceklis-momoyo/v2';
         let mqttClient = null;
-        let useBuiltinRealtime = false;
+        let isRealtimeConnected = false;
         let masterUpdatedAt = 0;
         let outletUpdatedAtMap = {};
+
+        // =====================================================
+        // 3. REFERENSI ELEMEN DOM
+        // =====================================================
+        const loginScreen = document.getElementById('loginScreen');
+        const appScreen = document.getElementById('appScreen');
+        const loginForm = document.getElementById('loginForm');
+        const loginPinInput = document.getElementById('loginPinInput');
         const loginErrorMsg = document.getElementById('loginErrorMsg');
         const loginSyncStatus = document.getElementById('loginSyncStatus');
 
-        const headerMainTitle = document.getElementById('headerMainTitle');
+        const syncBadge = document.getElementById('syncBadge');
         const headerRoleSubtitle = document.getElementById('headerRoleSubtitle');
         const roleBadge = document.getElementById('roleBadge');
-        const syncBadge = document.getElementById('syncBadge');
-        const subAccountBanner = document.getElementById('subAccountBanner');
-        const subBannerLabel = document.getElementById('subBannerLabel');
         const btnHeaderResetMenu = document.getElementById('btnHeaderResetMenu');
         const btnOpenSettings = document.getElementById('btnOpenSettings');
         const btnLogout = document.getElementById('btnLogout');
+        const subAccountBanner = document.getElementById('subAccountBanner');
+        const subBannerLabel = document.getElementById('subBannerLabel');
 
         const activeOutletChip = document.getElementById('activeOutletChip');
         const visualDateLabel = document.getElementById('visualDateLabel');
@@ -840,6 +784,8 @@
         const mainGreenTabsContainer = document.getElementById('mainGreenTabsContainer');
 
         const adminOutletsOverview = document.getElementById('adminOutletsOverview');
+        const adminOverviewDesc = document.getElementById('adminOverviewDesc');
+        const adminOverviewResetActions = document.getElementById('adminOverviewResetActions');
         const outletSwitcherGrid = document.getElementById('outletSwitcherGrid');
         const btnResetSelectedOutlet = document.getElementById('btnResetSelectedOutlet');
         const btnResetAllOutlets = document.getElementById('btnResetAllOutlets');
@@ -858,34 +804,28 @@
         const btnCollapseAll = document.getElementById('btnCollapseAll');
         const categoriesContainer = document.getElementById('categoriesContainer');
 
-        const waCategoryFilter = document.getElementById('waCategoryFilter');
-        const waPreviewContent = document.getElementById('waPreviewContent');
         const previewOutletSub = document.getElementById('previewOutletSub');
         const previewPercentBadge = document.getElementById('previewPercentBadge');
+        const waCategoryFilter = document.getElementById('waCategoryFilter');
+        const waPreviewContent = document.getElementById('waPreviewContent');
         const previewTime = document.getElementById('previewTime');
         const btnCopyText = document.getElementById('btnCopyText');
         const btnSendWA = document.getElementById('btnSendWA');
 
         const settingsModal = document.getElementById('settingsModal');
-        const settingsForm = document.getElementById('settingsForm');
         const btnCloseSettings = document.getElementById('btnCloseSettings');
         const btnCancelSettings = document.getElementById('btnCancelSettings');
+        const settingsForm = document.getElementById('settingsForm');
         const inputAdminPin = document.getElementById('inputAdminPin');
         const btnToggleAdminPin = document.getElementById('btnToggleAdminPin');
+        const inputViewerPin = document.getElementById('inputViewerPin');
+        const btnToggleViewerPin = document.getElementById('btnToggleViewerPin');
         const settingsOutletsList = document.getElementById('settingsOutletsList');
         const settingAutoDate = document.getElementById('settingAutoDate');
         const settingStrikethrough = document.getElementById('settingStrikethrough');
         const settingCategoryBars = document.getElementById('settingCategoryBars');
         const settingsErrorMsg = document.getElementById('settingsErrorMsg');
         const btnModalRestoreDefaults = document.getElementById('btnModalRestoreDefaults');
-
-        const settingsCloudStatusBadge = document.getElementById('settingsCloudStatusBadge');
-        const inputCloudConfigJson = document.getElementById('inputCloudConfigJson');
-        const cloudConfigFeedback = document.getElementById('cloudConfigFeedback');
-        const btnSaveCloudConfig = document.getElementById('btnSaveCloudConfig');
-        const btnDownloadGitHubHtml = document.getElementById('btnDownloadGitHubHtml');
-        const btnCopyOutletShareLink = document.getElementById('btnCopyOutletShareLink');
-        const btnClearCloudConfig = document.getElementById('btnClearCloudConfig');
 
         const resetMenuModal = document.getElementById('resetMenuModal');
         const btnCloseResetMenu = document.getElementById('btnCloseResetMenu');
@@ -899,47 +839,48 @@
         const btnConfirmCancel = document.getElementById('btnConfirmCancel');
         const btnConfirmProceed = document.getElementById('btnConfirmProceed');
 
-        const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toastMessage');
+        const toastEl = document.getElementById('toast');
+        const toastMessageEl = document.getElementById('toastMessage');
 
         // =====================================================
-        // 4. UTILITAS PENYIMPANAN LOKAL (FALLBACK) & FIREBASE
+        // 4. FUNGSI BANTUAN & PERHITUNGAN PROGRES
         // =====================================================
-        function loadFromLocalStorage() {
-            try {
-                const rawMaster = localStorage.getItem(LOCAL_MASTER_KEY);
-                if (rawMaster) {
-                    const parsed = JSON.parse(rawMaster);
-                    masterData = { ...createDefaultMasterConfig(), ...parsed };
-                    if (!Array.isArray(masterData.outlets) || masterData.outlets.length === 0) {
-                        masterData.outlets = createDefaultOutlets();
-                    }
-                    if (!Array.isArray(masterData.categories) || masterData.categories.length === 0) {
-                        masterData.categories = createDefaultCategories();
-                    }
-                }
-                const rawProg = localStorage.getItem(LOCAL_PROGRESS_KEY);
-                if (rawProg) {
-                    const parsedProg = JSON.parse(rawProg);
-                    outletChecksMap = parsedProg.checks || {};
-                    outletCheckersMap = parsedProg.checkers || {};
-                }
-            } catch (err) {
-                console.warn('Gagal membaca localStorage:', err);
-            }
-            ensureOutletMaps();
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
 
-        function saveToLocalStorage() {
-            try {
-                localStorage.setItem(LOCAL_MASTER_KEY, JSON.stringify(masterData));
-                localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify({
-                    checks: outletChecksMap,
-                    checkers: outletCheckersMap
-                }));
-            } catch (err) {
-                console.warn('Gagal menyimpan ke localStorage:', err);
-            }
+        function showToast(msg) {
+            toastMessageEl.textContent = msg;
+            toastEl.classList.remove('opacity-0', 'translate-y-3');
+            toastEl.classList.add('opacity-100', 'translate-y-0');
+            clearTimeout(window.__toastTimer);
+            window.__toastTimer = setTimeout(() => {
+                toastEl.classList.add('opacity-0', 'translate-y-3');
+                toastEl.classList.remove('opacity-100', 'translate-y-0');
+            }, 2500);
+        }
+
+        function openConfirmModal(title, message, onProceed, proceedBtnClass = 'bg-amber-600 hover:bg-amber-700') {
+            confirmModalTitle.textContent = title;
+            confirmModalMessage.textContent = message;
+            confirmCallback = onProceed;
+            btnConfirmProceed.className = `px-4 py-2 text-sm font-bold text-white rounded-xl transition-colors cursor-pointer ${proceedBtnClass}`;
+            confirmModal.classList.remove('hidden');
+            confirmModal.classList.add('flex');
+        }
+
+        function closeConfirmModal() {
+            confirmModal.classList.add('hidden');
+            confirmModal.classList.remove('flex');
+            confirmCallback = null;
+        }
+
+        function getOutletById(outletId) {
+            return masterData.outlets.find(o => o.id === outletId) || masterData.outlets[0];
         }
 
         function ensureOutletMaps() {
@@ -947,360 +888,6 @@
                 if (!outletChecksMap[o.id]) outletChecksMap[o.id] = {};
                 if (typeof outletCheckersMap[o.id] !== 'string') outletCheckersMap[o.id] = '';
             });
-            if (!masterData.outlets.some(o => o.id === activeOutletId) && masterData.outlets.length > 0) {
-                activeOutletId = masterData.outlets[0].id;
-            }
-        }
-
-        function updateSyncStatusUI(isOnline, message) {
-            if (isOnline) {
-                loginSyncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span class="text-emerald-700 font-medium">${message}</span>`;
-                syncBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span><span>Real-Time</span>`;
-                if (settingsCloudStatusBadge) {
-                    settingsCloudStatusBadge.textContent = 'Terhubung Real-Time';
-                    settingsCloudStatusBadge.className = 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 shrink-0';
-                }
-            } else {
-                loginSyncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-sky-500"></span><span class="text-slate-500 font-medium">${message}</span>`;
-                syncBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-sky-300"></span><span>Mode Lokal</span>`;
-                if (settingsCloudStatusBadge) {
-                    settingsCloudStatusBadge.textContent = 'Mode Lokal';
-                    settingsCloudStatusBadge.className = 'text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 shrink-0';
-                }
-            }
-        }
-
-        // Mengekstrak & memvalidasi konfigurasi server dari teks JSON atau potongan kode JS
-        function parseCloudConfigInput(rawText) {
-            if (!rawText || typeof rawText !== 'string') return null;
-            const firstBrace = rawText.indexOf('{');
-            const lastBrace = rawText.lastIndexOf('}');
-            if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) return null;
-
-            let block = rawText.slice(firstBrace, lastBrace + 1);
-            try {
-                const parsed = JSON.parse(block);
-                if (parsed && parsed.apiKey && parsed.projectId) return parsed;
-            } catch (_) {
-                // Coba normalisasi object literal JavaScript (kunci tanpa tanda kutip / trailing comma)
-                try {
-                    const normalized = block
-                        .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?\s*:/g, '"$2":')
-                        .replace(/'/g, '"')
-                        .replace(/,\s*}/g, '}');
-                    const parsed = JSON.parse(normalized);
-                    if (parsed && parsed.apiKey && parsed.projectId) return parsed;
-                } catch (err2) {
-                    return null;
-                }
-            }
-            return null;
-        }
-
-        // Membaca konfigurasi server dari URL (#cfg=...), file tertanam, localStorage, atau environment
-        function resolveCloudConfig() {
-            // 1. Cek parameter hash URL (#cfg=...) agar link outlet langsung otomatis terhubung
-            try {
-                const hash = window.location.hash || '';
-                const match = hash.match(/cfg=([A-Za-z0-9+/=_-]+)/);
-                if (match && match[1]) {
-                    const b64 = match[1].replace(/-/g, '+').replace(/_/g, '/');
-                    const decoded = decodeURIComponent(escape(atob(b64)));
-                    const parsedHashCfg = JSON.parse(decoded);
-                    if (parsedHashCfg && parsedHashCfg.apiKey && parsedHashCfg.projectId) {
-                        localStorage.setItem(LOCAL_CLOUD_CFG_KEY, JSON.stringify(parsedHashCfg));
-                        history.replaceState(null, '', window.location.pathname + window.location.search);
-                        return { config: parsedHashCfg, isExternal: true };
-                    }
-                }
-            } catch (e) {
-                console.warn('Gagal membaca konfigurasi dari URL:', e);
-            }
-
-            // 2. Cek konfigurasi yang sudah tertanam di file index.html (untuk GitHub Pages)
-            if (EMBEDDED_CLOUD_CONFIG && EMBEDDED_CLOUD_CONFIG.apiKey && EMBEDDED_CLOUD_CONFIG.projectId) {
-                return { config: EMBEDDED_CLOUD_CONFIG, isExternal: true };
-            }
-
-            // 3. Cek konfigurasi yang disimpan Admin di browser
-            try {
-                const savedCfg = localStorage.getItem(LOCAL_CLOUD_CFG_KEY);
-                if (savedCfg) {
-                    const parsed = JSON.parse(savedCfg);
-                    if (parsed && parsed.apiKey && parsed.projectId) {
-                        return { config: parsed, isExternal: true };
-                    }
-                }
-            } catch (_) {}
-
-            // 4. Cek konfigurasi bawaan environment platform
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                return { config: JSON.parse(__firebase_config), isExternal: false };
-            }
-
-            return { config: null, isExternal: false };
-        }
-
-        async function initFirebase() {
-            loadFromLocalStorage();
-            if (unsubscribeMaster) { unsubscribeMaster(); unsubscribeMaster = null; }
-            if (unsubscribeProgress) { unsubscribeProgress(); unsubscribeProgress = null; }
-
-            try {
-                const resolved = resolveCloudConfig();
-                if (!resolved.config) {
-                    useCloudSync = false;
-                    initBuiltinRealtimeSync();
-                    return;
-                }
-
-                const firebaseConfig = resolved.config;
-                appIdGlobal = resolved.isExternal
-                    ? (firebaseConfig.projectId || 'momoyo-github-app')
-                    : (typeof __app_id !== 'undefined' ? __app_id : 'default-app-id');
-
-                const appName = resolved.isExternal ? 'momoyo_external_' + appIdGlobal : '[DEFAULT]';
-                const app = initializeApp(firebaseConfig, appName);
-                auth = getAuth(app);
-                db = getFirestore(app);
-
-                if (!resolved.isExternal && typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    const cred = await signInWithCustomToken(auth, __initial_auth_token);
-                    currentUser = cred.user;
-                } else {
-                    try {
-                        const cred = await signInAnonymously(auth);
-                        currentUser = cred.user;
-                    } catch (authErr) {
-                        if (!resolved.isExternal) throw authErr;
-                        console.warn('Lanjut sinkronisasi database:', authErr);
-                    }
-                }
-
-                useCloudSync = true;
-
-                // 1) Listener dokumen master (template + 5 outlet MOMOYO + PIN)
-                masterDocRef = doc(db, 'artifacts', appIdGlobal, 'public', 'data', 'momoyo_checklist_v2', 'master_config');
-                unsubscribeMaster = onSnapshot(masterDocRef, async (snap) => {
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        masterData = {
-                            ...createDefaultMasterConfig(),
-                            ...data,
-                            outlets: Array.isArray(data.outlets) && data.outlets.length ? data.outlets : createDefaultOutlets(),
-                            categories: Array.isArray(data.categories) ? data.categories : createDefaultCategories()
-                        };
-                        ensureOutletMaps();
-                        saveToLocalStorage();
-                    } else {
-                        await setDoc(masterDocRef, masterData);
-                    }
-                    updateSyncStatusUI(true, 'Terhubung ke server real-time');
-                    if (currentRole) renderAll();
-                }, (err) => {
-                    console.error('Error listener master:', err);
-                    useCloudSync = false;
-                    updateSyncStatusUI(false, 'Gagal terhubung ke server (Cek aturan akses)');
-                });
-
-                // 2) Listener koleksi progres masing-masing outlet
-                const progressColRef = collection(db, 'artifacts', appIdGlobal, 'public', 'data', 'momoyo_outlet_progress_v2');
-                unsubscribeProgress = onSnapshot(progressColRef, (querySnap) => {
-                    querySnap.forEach((docSnap) => {
-                        const oId = docSnap.id;
-                        const d = docSnap.data() || {};
-                        outletChecksMap[oId] = d.checks && typeof d.checks === 'object' ? d.checks : {};
-                        outletCheckersMap[oId] = typeof d.checkerName === 'string' ? d.checkerName : '';
-                    });
-                    saveToLocalStorage();
-                    if (currentRole) renderAll();
-                }, (err) => {
-                    console.error('Error listener progres outlet:', err);
-                });
-
-            } catch (error) {
-                console.warn('Fallback ke sinkronisasi otomatis bawaan:', error);
-                useCloudSync = false;
-                initBuiltinRealtimeSync();
-            }
-        }
-
-        // Sinkronisasi Real-Time Otomatis Bawaan (Tanpa perlu setup akun/config)
-        function initBuiltinRealtimeSync() {
-            if (typeof window.mqtt === 'undefined') {
-                useBuiltinRealtime = false;
-                updateSyncStatusUI(false, 'Siap digunakan (Penyimpanan Lokal)');
-                return;
-            }
-
-            if (mqttClient) {
-                try { mqttClient.end(true); } catch (_) {}
-                mqttClient = null;
-            }
-
-            const brokers = [
-                'wss://broker.emqx.io:8084/mqtt',
-                'wss://broker.hivemq.com:8884/mqtt'
-            ];
-            let brokerIdx = 0;
-
-            const connectBroker = (url) => {
-                updateSyncStatusUI(false, 'Menghubungkan ke server real-time...');
-                const client = window.mqtt.connect(url, {
-                    clientId: 'momoyo_' + Math.random().toString(36).slice(2, 10),
-                    clean: true,
-                    connectTimeout: 8000,
-                    reconnectPeriod: 3000
-                });
-
-                mqttClient = client;
-
-                client.on('connect', () => {
-                    useBuiltinRealtime = true;
-                    updateSyncStatusUI(true, 'Terhubung ke server real-time');
-                    client.subscribe(`${RT_TOPIC_PREFIX}/#`, { qos: 1 }, (err) => {
-                        if (!err) {
-                            // Kirim state awal jika belum ada data di server setelah 1.8 detik
-                            setTimeout(() => {
-                                if (masterUpdatedAt === 0 && useBuiltinRealtime && client.connected) {
-                                    publishRealtimeMaster();
-                                }
-                            }, 1800);
-                        }
-                    });
-                });
-
-                client.on('message', (topic, payloadBuffer) => {
-                    try {
-                        const raw = payloadBuffer.toString();
-                        if (!raw) return;
-                        const data = JSON.parse(raw);
-                        if (!data || data.clientId === CLIENT_ID) return;
-
-                        if (topic === `${RT_TOPIC_PREFIX}/master`) {
-                            const incomingTs = Number(data.updatedAt) || 1;
-                            if (incomingTs >= masterUpdatedAt) {
-                                masterUpdatedAt = incomingTs;
-                                masterData = {
-                                    ...createDefaultMasterConfig(),
-                                    ...data,
-                                    outlets: Array.isArray(data.outlets) && data.outlets.length ? data.outlets : createDefaultOutlets(),
-                                    categories: Array.isArray(data.categories) ? data.categories : createDefaultCategories()
-                                };
-                                ensureOutletMaps();
-                                saveToLocalStorage();
-                                if (currentRole) renderAll();
-                            }
-                        } else if (topic.startsWith(`${RT_TOPIC_PREFIX}/outlet/`)) {
-                            const oId = topic.replace(`${RT_TOPIC_PREFIX}/outlet/`, '');
-                            const incomingTs = Number(data.updatedAt) || 1;
-                            const localTs = outletUpdatedAtMap[oId] || 0;
-                            if (incomingTs >= localTs) {
-                                outletUpdatedAtMap[oId] = incomingTs;
-                                outletChecksMap[oId] = data.checks && typeof data.checks === 'object' ? data.checks : {};
-                                outletCheckersMap[oId] = typeof data.checkerName === 'string' ? data.checkerName : '';
-                                saveToLocalStorage();
-                                if (currentRole) renderAll();
-                            }
-                        }
-                    } catch (e) {
-                        console.warn('Gagal memproses pesan real-time:', e);
-                    }
-                });
-
-                client.on('error', () => {
-                    if (!useBuiltinRealtime && brokerIdx + 1 < brokers.length) {
-                        try { client.end(true); } catch (_) {}
-                        brokerIdx++;
-                        connectBroker(brokers[brokerIdx]);
-                    }
-                });
-
-                client.on('offline', () => {
-                    updateSyncStatusUI(false, 'Menyambung ulang ke server...');
-                });
-            };
-
-            connectBroker(brokers[brokerIdx]);
-        }
-
-        function publishRealtimeMaster() {
-            if (!useBuiltinRealtime || !mqttClient || !mqttClient.connected) return;
-            const ts = Date.now();
-            masterUpdatedAt = ts;
-            const payload = JSON.stringify({
-                ...masterData,
-                updatedAt: ts,
-                clientId: CLIENT_ID
-            });
-            mqttClient.publish(`${RT_TOPIC_PREFIX}/master`, payload, { retain: true, qos: 1 });
-        }
-
-        function publishRealtimeOutlet(outletId) {
-            if (!useBuiltinRealtime || !mqttClient || !mqttClient.connected) return;
-            const ts = Date.now();
-            outletUpdatedAtMap[outletId] = ts;
-            const payload = JSON.stringify({
-                checks: outletChecksMap[outletId] || {},
-                checkerName: outletCheckersMap[outletId] || '',
-                updatedAt: ts,
-                clientId: CLIENT_ID
-            });
-            mqttClient.publish(`${RT_TOPIC_PREFIX}/outlet/${outletId}`, payload, { retain: true, qos: 1 });
-        }
-
-        // Simpan Master Config (debounced untuk ketikan, langsung untuk aksi tombol)
-        function saveMasterConfig(immediate = false) {
-            saveToLocalStorage();
-
-            if (saveMasterTimer) clearTimeout(saveMasterTimer);
-            const execSave = async () => {
-                if (useBuiltinRealtime) {
-                    publishRealtimeMaster();
-                }
-                if (useCloudSync && masterDocRef) {
-                    try {
-                        await setDoc(masterDocRef, { ...masterData, updatedAt: Date.now() }, { merge: true });
-                    } catch (err) {
-                        console.error('Gagal menyimpan master ke cloud:', err);
-                    }
-                }
-            };
-
-            if (immediate) {
-                execSave();
-            } else {
-                saveMasterTimer = setTimeout(execSave, 400);
-            }
-        }
-
-        // Simpan Progres (centang + nama checker) untuk satu outlet
-        async function saveOutletProgress(outletId) {
-            saveToLocalStorage();
-
-            if (useBuiltinRealtime) {
-                publishRealtimeOutlet(outletId);
-            }
-
-            if (!useCloudSync || !db) return;
-
-            try {
-                const progRef = doc(db, 'artifacts', appIdGlobal, 'public', 'data', 'momoyo_outlet_progress_v2', outletId);
-                await setDoc(progRef, {
-                    checks: outletChecksMap[outletId] || {},
-                    checkerName: outletCheckersMap[outletId] || '',
-                    updatedAt: Date.now()
-                }, { merge: true });
-            } catch (err) {
-                console.error('Gagal menyimpan progres outlet:', err);
-            }
-        }
-
-        // =====================================================
-        // 5. FUNGSI HELPER DATA, STATISTIK & TANGGAL
-        // =====================================================
-        function getOutletById(outletId) {
-            return masterData.outlets.find(o => o.id === outletId) || masterData.outlets[0];
         }
 
         function getChecksForOutlet(outletId) {
@@ -1309,103 +896,246 @@
         }
 
         function isTaskDone(outletId, taskId) {
-            const checks = getChecksForOutlet(outletId);
-            return !!checks[taskId];
-        }
-
-        function getCheckerNameForOutlet(outletId) {
-            return (outletCheckersMap[outletId] || '').trim();
-        }
-
-        function getCategoryStats(outletId, category) {
-            const tasks = Array.isArray(category.tasks) ? category.tasks : [];
-            const total = tasks.length;
-            let done = 0;
-            for (const t of tasks) {
-                if (isTaskDone(outletId, t.id)) done++;
-            }
-            const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-            return { done, total, percent };
+            return !!getChecksForOutlet(outletId)[taskId];
         }
 
         function getOverallStats(outletId) {
             let total = 0;
             let done = 0;
-            for (const cat of masterData.categories) {
-                const stats = getCategoryStats(outletId, cat);
-                total += stats.total;
-                done += stats.done;
-            }
-            const percent = total > 0 ? Math.round((done / total) * 100) : 0;
-            return { done, total, percent };
-        }
-
-        function getFormattedDateID() {
-            const now = new Date();
-            return now.toLocaleDateString('id-ID', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric'
+            masterData.categories.forEach(cat => {
+                (cat.tasks || []).forEach(task => {
+                    total++;
+                    if (isTaskDone(outletId, task.id)) done++;
+                });
             });
+            const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+            return { total, done, percent };
         }
 
-        function getCurrentTimeHM() {
-            const now = new Date();
-            return now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        function getCategoryStats(outletId, category) {
+            const tasks = category.tasks || [];
+            const total = tasks.length;
+            const done = tasks.filter(t => isTaskDone(outletId, t.id)).length;
+            const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+            return { total, done, percent };
         }
 
-        function buildGreenEmojiBar(done, total, scaleMode) {
-            if (total <= 0) return '⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜';
-            let slots = 10;
-            let filled = 0;
-            if (scaleMode === 'tasks') {
-                slots = Math.min(total, 15);
-                filled = Math.round((done / total) * slots);
-            } else {
-                slots = 10;
-                filled = Math.round((done / total) * 10);
+        function buildGreenTabString(done, total) {
+            if (total === 0) return '⬜⬜⬜⬜⬜⬜⬜⬜⬜⬜';
+            let barLength = 10;
+            if (masterData.waBarScale === 'tasks') {
+                barLength = Math.min(Math.max(total, 1), 15);
             }
-            filled = Math.max(0, Math.min(slots, filled));
-            return '🟩'.repeat(filled) + '⬜'.repeat(slots - filled);
+            const filledCount = Math.round((done / total) * barLength);
+            const emptyCount = Math.max(0, barLength - filledCount);
+            return '🟩'.repeat(filledCount) + '⬜'.repeat(emptyCount);
         }
 
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
+        function formatIndonesianDate() {
+            const now = new Date();
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            return `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
         }
 
-        function showToast(msg) {
-            toastMessage.textContent = msg;
-            toast.classList.remove('opacity-0', 'translate-y-3');
-            toast.classList.add('opacity-100', 'translate-y-0');
-            if (toastTimeout) clearTimeout(toastTimeout);
-            toastTimeout = setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-3');
-                toast.classList.remove('opacity-100', 'translate-y-0');
-            }, 2600);
+        function updateClock() {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            previewTime.textContent = `${hh}:${mm}`;
         }
 
         // =====================================================
-        // 6. AUTENTIKASI LOGIN (ADMIN & 5 OUTLET RAHASIA)
+        // 5. PENYIMPANAN LOKAL & SINKRONISASI REAL-TIME OTOMATIS
         // =====================================================
-        function handleLoginSubmit(e) {
-            e.preventDefault();
-            const enteredPin = loginPinInput.value.trim();
-            loginErrorMsg.classList.add('hidden');
+        function loadFromLocalStorage() {
+            try {
+                const rawMaster = localStorage.getItem(LOCAL_MASTER_KEY);
+                if (rawMaster) {
+                    const parsed = JSON.parse(rawMaster);
+                    if (parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.outlets)) {
+                        masterData = { ...createDefaultMasterConfig(), ...parsed };
+                    }
+                }
+            } catch (e) {
+                console.warn('Gagal membaca master lokal:', e);
+            }
 
-            if (!enteredPin) {
-                loginErrorMsg.textContent = 'Masukkan PIN terlebih dahulu.';
-                loginErrorMsg.classList.remove('hidden');
+            try {
+                const rawProgress = localStorage.getItem(LOCAL_PROGRESS_KEY);
+                if (rawProgress) {
+                    const parsed = JSON.parse(rawProgress);
+                    if (parsed && typeof parsed === 'object') {
+                        if (parsed.checks) outletChecksMap = parsed.checks;
+                        if (parsed.checkers) outletCheckersMap = parsed.checkers;
+                        if (parsed.updatedAt) outletUpdatedAtMap = parsed.updatedAt;
+                    }
+                }
+            } catch (e) {
+                console.warn('Gagal membaca progres lokal:', e);
+            }
+            ensureOutletMaps();
+        }
+
+        function saveMasterToLocal() {
+            try {
+                localStorage.setItem(LOCAL_MASTER_KEY, JSON.stringify(masterData));
+            } catch (e) {
+                console.warn('Gagal menyimpan master lokal:', e);
+            }
+        }
+
+        function saveProgressToLocal() {
+            try {
+                localStorage.setItem(LOCAL_PROGRESS_KEY, JSON.stringify({
+                    checks: outletChecksMap,
+                    checkers: outletCheckersMap,
+                    updatedAt: outletUpdatedAtMap
+                }));
+            } catch (e) {
+                console.warn('Gagal menyimpan progres lokal:', e);
+            }
+        }
+
+        function updateSyncConnectionUI(connected) {
+            isRealtimeConnected = connected;
+            if (connected) {
+                loginSyncStatus.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-emerald-700 font-semibold">Terhubung ke server real-time</span>
+                `;
+                syncBadge.className = 'inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/30 text-emerald-50 border border-emerald-300/30 shrink-0';
+                syncBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-300"></span><span>Real-Time</span>`;
+            } else {
+                loginSyncStatus.innerHTML = `
+                    <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                    <span class="text-slate-500">Siap digunakan (Penyimpanan Lokal)</span>
+                `;
+                syncBadge.className = 'inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/15 text-emerald-100 border border-white/20 shrink-0';
+                syncBadge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-amber-300"></span><span>Lokal</span>`;
+            }
+        }
+
+        function broadcastMasterUpdate() {
+            if (!mqttClient || !isRealtimeConnected) return;
+            try {
+                const payload = JSON.stringify({
+                    sender: CLIENT_SESSION_ID,
+                    updatedAt: masterUpdatedAt,
+                    master: masterData
+                });
+                mqttClient.publish(`${MQTT_TOPIC_PREFIX}/master`, payload, { qos: 1, retain: true });
+            } catch (e) {
+                console.warn('Gagal publish master:', e);
+            }
+        }
+
+        function broadcastOutletProgress(outletId) {
+            if (!mqttClient || !isRealtimeConnected) return;
+            try {
+                const payload = JSON.stringify({
+                    sender: CLIENT_SESSION_ID,
+                    outletId: outletId,
+                    updatedAt: outletUpdatedAtMap[outletId] || Date.now(),
+                    checks: outletChecksMap[outletId] || {},
+                    checker: outletCheckersMap[outletId] || ''
+                });
+                mqttClient.publish(`${MQTT_TOPIC_PREFIX}/outlet/${outletId}`, payload, { qos: 1, retain: true });
+            } catch (e) {
+                console.warn('Gagal publish progres outlet:', e);
+            }
+        }
+
+        function saveMasterConfig() {
+            masterUpdatedAt = Date.now();
+            saveMasterToLocal();
+            broadcastMasterUpdate();
+        }
+
+        function saveOutletProgress(outletId) {
+            outletUpdatedAtMap[outletId] = Date.now();
+            saveProgressToLocal();
+            broadcastOutletProgress(outletId);
+        }
+
+        function initRealtimeSync() {
+            if (typeof mqtt === 'undefined') {
+                updateSyncConnectionUI(false);
                 return;
             }
+            try {
+                mqttClient = mqtt.connect('wss://broker.emqx.io:8084/mqtt', {
+                    clientId: 'momoyo_' + Math.random().toString(16).slice(2, 10),
+                    clean: true,
+                    connectTimeout: 8000,
+                    reconnectPeriod: 4000
+                });
 
-            // Cek apakah PIN Administrator
-            if (enteredPin === String(masterData.adminPin)) {
+                mqttClient.on('connect', () => {
+                    updateSyncConnectionUI(true);
+                    mqttClient.subscribe(`${MQTT_TOPIC_PREFIX}/master`, { qos: 1 });
+                    mqttClient.subscribe(`${MQTT_TOPIC_PREFIX}/outlet/+`, { qos: 1 });
+                });
+
+                mqttClient.on('reconnect', () => {
+                    updateSyncConnectionUI(false);
+                });
+
+                mqttClient.on('offline', () => {
+                    updateSyncConnectionUI(false);
+                });
+
+                mqttClient.on('error', () => {
+                    updateSyncConnectionUI(false);
+                });
+
+                mqttClient.on('message', (topic, messageBuffer) => {
+                    try {
+                        const data = JSON.parse(messageBuffer.toString());
+                        if (!data || data.sender === CLIENT_SESSION_ID) return;
+
+                        if (topic === `${MQTT_TOPIC_PREFIX}/master` && data.master) {
+                            const incomingTs = Number(data.updatedAt || 0);
+                            if (incomingTs > masterUpdatedAt) {
+                                masterUpdatedAt = incomingTs;
+                                masterData = { ...createDefaultMasterConfig(), ...data.master };
+                                ensureOutletMaps();
+                                saveMasterToLocal();
+                                if (currentRole) renderAll();
+                            }
+                        } else if (topic.startsWith(`${MQTT_TOPIC_PREFIX}/outlet/`) && data.outletId) {
+                            const oid = data.outletId;
+                            const incomingTs = Number(data.updatedAt || 0);
+                            const currentTs = Number(outletUpdatedAtMap[oid] || 0);
+                            if (incomingTs > currentTs) {
+                                outletUpdatedAtMap[oid] = incomingTs;
+                                outletChecksMap[oid] = data.checks || {};
+                                outletCheckersMap[oid] = typeof data.checker === 'string' ? data.checker : '';
+                                saveProgressToLocal();
+                                if (currentRole) renderAll();
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Pesan sinkronisasi tidak valid:', err);
+                    }
+                });
+            } catch (e) {
+                console.warn('Inisialisasi MQTT gagal:', e);
+                updateSyncConnectionUI(false);
+            }
+        }
+
+        // =====================================================
+        // 6. AUTENTIKASI & KONTROL AKSES PERAN
+        // =====================================================
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            loginErrorMsg.classList.add('hidden');
+            const enteredPin = loginPinInput.value.trim();
+            if (!enteredPin) return;
+
+            // 1. Cek PIN Administrator
+            if (enteredPin === String(masterData.adminPin || '1234')) {
                 currentRole = 'admin';
                 loggedInOutletId = null;
                 activeOutletId = masterData.outlets[0]?.id || 'outlet_2421';
@@ -1414,23 +1144,32 @@
                 return;
             }
 
-            // Cek apakah cocok dengan salah satu dari 5 Outlet
+            // 2. Cek PIN Pemantau (View-Only)
+            if (enteredPin === String(masterData.viewerPin || '202611')) {
+                currentRole = 'viewer';
+                loggedInOutletId = null;
+                activeOutletId = masterData.outlets[0]?.id || 'outlet_2421';
+                enterApp();
+                showToast('Masuk sebagai Pemantau (View-Only)');
+                return;
+            }
+
+            // 3. Cek PIN 5 Outlet MOMOYO
             const matchedOutlet = masterData.outlets.find(o => String(o.pin) === enteredPin);
             if (matchedOutlet) {
                 currentRole = 'sub';
                 loggedInOutletId = matchedOutlet.id;
                 activeOutletId = matchedOutlet.id;
                 enterApp();
-                showToast(`Masuk ke ${matchedOutlet.name}`);
+                showToast(`Masuk sebagai ${matchedOutlet.name}`);
                 return;
             }
 
-            // Jika tidak cocok
-            loginErrorMsg.textContent = 'PIN tidak valid. Silakan coba lagi.';
+            // PIN tidak dikenali
             loginErrorMsg.classList.remove('hidden');
             loginPinInput.value = '';
             loginPinInput.focus();
-        }
+        });
 
         function enterApp() {
             loginPinInput.value = '';
@@ -1441,19 +1180,20 @@
             renderAll();
         }
 
-        function handleLogout() {
+        function logoutApp() {
             currentRole = null;
             loggedInOutletId = null;
             activeCategoryFilter = 'all';
-            waSelectedCategory = 'all';
             appScreen.classList.add('hidden');
             loginScreen.classList.remove('hidden');
             loginPinInput.value = '';
-            setTimeout(() => loginPinInput.focus(), 100);
+            loginErrorMsg.classList.add('hidden');
+            setTimeout(() => loginPinInput.focus(), 50);
         }
 
         function applyRoleVisibility() {
             const isAdmin = currentRole === 'admin';
+            const isViewer = currentRole === 'viewer';
             const outlet = getOutletById(activeOutletId);
 
             if (isAdmin) {
@@ -1462,15 +1202,41 @@
                 headerRoleSubtitle.textContent = 'Kendali Penuh • 5 Outlet MOMOYO';
                 subAccountBanner.classList.add('hidden');
                 adminOutletsOverview.classList.remove('hidden');
+                adminOverviewDesc.textContent = 'Klik kartu outlet untuk memantau detail ceklis, mereset centang, atau mengirim laporan WA.';
+                adminOverviewResetActions.classList.remove('hidden');
                 adminTopControls.classList.remove('hidden');
                 btnHeaderResetMenu.classList.remove('hidden');
                 btnHeaderResetMenu.classList.add('flex');
                 btnOpenSettings.classList.remove('hidden');
                 btnOpenSettings.classList.add('flex');
+                inputCheckerName.disabled = false;
+                inputCheckerName.classList.remove('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
+                inputCheckerName.classList.add('bg-slate-50', 'text-slate-800');
+                checkerSaveStatus.textContent = 'Tersimpan otomatis';
+            } else if (isViewer) {
+                roleBadge.textContent = 'Pemantau (View-Only)';
+                roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-sky-400/25 text-sky-50 border border-sky-200/40';
+                headerRoleSubtitle.textContent = 'Mode Pantau Saja • 5 Outlet MOMOYO';
+                subAccountBanner.className = 'bg-sky-50 border-b border-sky-200 px-4 py-2';
+                subBannerLabel.textContent = 'Mode Pemantau (View-Only) — Hanya melihat progres, tidak dapat mengisi atau mengedit ceklis';
+                subAccountBanner.classList.remove('hidden');
+                adminOutletsOverview.classList.remove('hidden');
+                adminOverviewDesc.textContent = 'Klik kartu outlet di bawah untuk melihat rincian progres masing-masing outlet.';
+                adminOverviewResetActions.classList.add('hidden');
+                adminTopControls.classList.add('hidden');
+                btnHeaderResetMenu.classList.add('hidden');
+                btnHeaderResetMenu.classList.remove('flex');
+                btnOpenSettings.classList.add('hidden');
+                btnOpenSettings.classList.remove('flex');
+                inputCheckerName.disabled = true;
+                inputCheckerName.classList.remove('bg-slate-50', 'text-slate-800');
+                inputCheckerName.classList.add('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
+                checkerSaveStatus.textContent = 'Mode Baca Saja';
             } else {
                 roleBadge.textContent = 'Sub-Akun Outlet';
                 roleBadge.className = 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-amber-400/25 text-amber-50 border border-amber-200/40';
                 headerRoleSubtitle.textContent = outlet ? outlet.name : 'Outlet MOMOYO';
+                subAccountBanner.className = 'bg-amber-50 border-b border-amber-200 px-4 py-2';
                 subBannerLabel.textContent = `${outlet ? outlet.name : 'Outlet'} — Isi Nama Checker, Ceklis & Kirim WhatsApp`;
                 subAccountBanner.classList.remove('hidden');
                 adminOutletsOverview.classList.add('hidden');
@@ -1479,6 +1245,10 @@
                 btnHeaderResetMenu.classList.remove('flex');
                 btnOpenSettings.classList.add('hidden');
                 btnOpenSettings.classList.remove('flex');
+                inputCheckerName.disabled = false;
+                inputCheckerName.classList.remove('bg-slate-100', 'text-slate-500', 'cursor-not-allowed');
+                inputCheckerName.classList.add('bg-slate-50', 'text-slate-800');
+                checkerSaveStatus.textContent = 'Tersimpan otomatis';
             }
         }
 
@@ -1488,8 +1258,10 @@
         function renderAll() {
             ensureOutletMaps();
             renderStickyHeaderProgress();
-            if (currentRole === 'admin') {
+            if (currentRole === 'admin' || currentRole === 'viewer') {
                 renderAdminOutletsOverview();
+            }
+            if (currentRole === 'admin') {
                 syncAdminMasterInputs();
             }
             syncCheckerInput();
@@ -1504,64 +1276,69 @@
             const stats = getOverallStats(activeOutletId);
 
             activeOutletChip.textContent = outlet ? outlet.name : 'OUTLET MOMOYO';
-            visualDateLabel.textContent = getFormattedDateID();
             visualTitleHeading.textContent = masterData.title || 'CEKLIS OPERASIONAL OUTLET MOMOYO';
-            headerMainTitle.textContent = masterData.title || 'Ceklis Progres WhatsApp';
+            visualDateLabel.textContent = masterData.showDate ? `• ${formatIndonesianDate()}` : '';
             visualPercentBig.textContent = `${stats.percent}%`;
             visualTaskCount.textContent = `${stats.done}/${stats.total} selesai`;
 
-            // Render 10 segmen tab hijau utama
-            const filledTabs = stats.total > 0 ? Math.round((stats.done / stats.total) * 10) : 0;
+            // 10 segmen tab hijau
+            const filledTabs = Math.round((stats.percent / 100) * 10);
             let tabsHtml = '';
             for (let i = 0; i < 10; i++) {
                 const isActive = i < filledTabs;
-                tabsHtml += `<div class="progress-tab h-3 sm:h-3.5 rounded-md ${isActive ? 'progress-tab-active' : 'bg-slate-200/90'}"></div>`;
+                tabsHtml += `
+                    <div class="h-3 sm:h-3.5 rounded-md progress-tab ${
+                        isActive
+                            ? 'progress-tab-active'
+                            : 'bg-slate-200/90 border border-slate-300/60'
+                    }"></div>
+                `;
             }
             mainGreenTabsContainer.innerHTML = tabsHtml;
         }
 
         function renderAdminOutletsOverview() {
-            let html = '';
-            masterData.outlets.forEach((outlet) => {
+            let cardsHtml = '';
+            masterData.outlets.forEach(outlet => {
                 const stats = getOverallStats(outlet.id);
-                const checker = getCheckerNameForOutlet(outlet.id);
+                const checkerName = (outletCheckersMap[outlet.id] || '').trim();
                 const isSelected = outlet.id === activeOutletId;
-                const filledMini = stats.total > 0 ? Math.round((stats.done / stats.total) * 5) : 0;
+                const filledMini = Math.round((stats.percent / 100) * 5);
 
                 let miniTabs = '';
                 for (let i = 0; i < 5; i++) {
-                    miniTabs += `<div class="h-1.5 rounded-sm ${i < filledMini ? 'bg-emerald-500' : 'bg-slate-200'}"></div>`;
+                    miniTabs += `<div class="h-1.5 rounded-full ${i < filledMini ? 'bg-emerald-500' : 'bg-slate-200'}"></div>`;
                 }
 
-                html += `
+                cardsHtml += `
                     <button type="button" data-select-outlet="${outlet.id}"
-                        class="text-left p-3 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                        class="text-left p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between gap-2 ${
                             isSelected
-                                ? 'border-emerald-500 bg-emerald-50/70 shadow-sm'
-                                : 'border-slate-200/90 bg-slate-50/50 hover:border-emerald-300 hover:bg-white'
+                                ? 'bg-emerald-50/80 border-emerald-500 shadow-xs'
+                                : 'bg-slate-50/70 border-slate-200/80 hover:bg-white hover:border-emerald-300'
                         }">
-                        <div class="flex items-start justify-between gap-1.5 w-full">
-                            <span class="text-[11px] font-extrabold leading-snug ${isSelected ? 'text-emerald-900' : 'text-slate-700'} line-clamp-2">
-                                ${escapeHtml(outlet.name)}
-                            </span>
-                            <span class="text-xs font-extrabold shrink-0 ${stats.percent === 100 ? 'text-emerald-600' : 'text-slate-600'}">
-                                ${stats.percent}%
-                            </span>
+                        <div class="flex items-start justify-between gap-1.5">
+                            <span class="text-xs font-extrabold text-slate-800 leading-snug line-clamp-2">${escapeHtml(outlet.name)}</span>
+                            <span class="text-xs font-extrabold px-2 py-0.5 rounded-full shrink-0 ${
+                                stats.percent === 100
+                                    ? 'bg-emerald-600 text-white'
+                                    : 'bg-emerald-100 text-emerald-800'
+                            }">${stats.percent}%</span>
                         </div>
-                        <div class="w-full space-y-1.5">
-                            <div class="grid grid-cols-5 gap-1">${miniTabs}</div>
-                            <div class="flex items-center justify-between text-[10px] text-slate-500">
-                                <span class="font-semibold">${stats.done}/${stats.total}</span>
-                                <span class="truncate max-w-[110px]" title="${escapeHtml(checker || 'Belum diisi')}">
-                                    👤 ${escapeHtml(checker || '-')}
-                                </span>
-                            </div>
+
+                        <div class="grid grid-cols-5 gap-1 w-full">
+                            ${miniTabs}
+                        </div>
+
+                        <div class="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                            <span class="truncate max-w-[65%]">${checkerName ? `👤 ${escapeHtml(checkerName)}` : '👤 Belum diisi'}</span>
+                            <span class="font-semibold text-slate-600 shrink-0">${stats.done}/${stats.total}</span>
                         </div>
                     </button>
                 `;
             });
-            outletSwitcherGrid.innerHTML = html;
 
+            outletSwitcherGrid.innerHTML = cardsHtml;
             outletSwitcherGrid.querySelectorAll('[data-select-outlet]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     activeOutletId = btn.getAttribute('data-select-outlet');
@@ -1588,10 +1365,10 @@
         function renderCategoryFilterBar() {
             let html = `
                 <button type="button" data-filter-cat="all"
-                    class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                    class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                         activeCategoryFilter === 'all'
-                            ? 'bg-wa-dark text-white shadow-xs'
-                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                            ? 'bg-emerald-600 text-white shadow-xs'
+                            : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                     }">
                     Semua (${masterData.categories.length})
                 </button>
@@ -1600,18 +1377,14 @@
             masterData.categories.forEach(cat => {
                 const stats = getCategoryStats(activeOutletId, cat);
                 const isActive = activeCategoryFilter === cat.id;
-                const shortName = cat.name.split('(')[0].trim();
                 html += `
                     <button type="button" data-filter-cat="${cat.id}"
-                        class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5 ${
+                        class="px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
                             isActive
-                                ? 'bg-wa-dark text-white shadow-xs'
-                                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                                ? 'bg-emerald-600 text-white shadow-xs'
+                                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                         }">
-                        <span>${escapeHtml(shortName)}</span>
-                        <span class="text-[10px] px-1.5 py-0.5 rounded-md ${isActive ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700'}">
-                            ${stats.done}/${stats.total}
-                        </span>
+                        ${escapeHtml(cat.name)} (${stats.done}/${stats.total})
                     </button>
                 `;
             });
@@ -1628,14 +1401,15 @@
 
         function renderCategoriesList() {
             const isAdmin = currentRole === 'admin';
+            const isViewer = currentRole === 'viewer';
             const visibleCategories = activeCategoryFilter === 'all'
                 ? masterData.categories
                 : masterData.categories.filter(c => c.id === activeCategoryFilter);
 
             if (visibleCategories.length === 0) {
                 categoriesContainer.innerHTML = `
-                    <div class="bg-white rounded-3xl p-8 text-center border border-slate-200 text-slate-500 text-sm">
-                        Belum ada kategori ceklis. ${isAdmin ? 'Tambahkan kategori baru di atas.' : ''}
+                    <div class="bg-white rounded-3xl p-8 text-center border border-slate-200 text-slate-400 text-sm">
+                        Belum ada kategori ceklis.
                     </div>
                 `;
                 return;
@@ -1644,30 +1418,36 @@
             let html = '';
             visibleCategories.forEach(cat => {
                 const stats = getCategoryStats(activeOutletId, cat);
-                const isCollapsed = collapsedCategories.has(cat.id);
-                const filledMini = stats.total > 0 ? Math.round((stats.done / stats.total) * 5) : 0;
+                const isCollapsed = !!collapsedCategories[cat.id];
+                const filledMini = Math.round((stats.percent / 100) * 5);
 
                 let miniBarHtml = '';
                 for (let i = 0; i < 5; i++) {
-                    miniBarHtml += `<div class="h-1.5 rounded-sm ${i < filledMini ? 'bg-emerald-500' : 'bg-slate-200'}"></div>`;
+                    miniBarHtml += `
+                        <div class="h-1.5 rounded-full transition-all ${
+                            i < filledMini ? 'bg-emerald-500' : 'bg-slate-200'
+                        }"></div>
+                    `;
                 }
 
                 let tasksHtml = '';
-                (cat.tasks || []).forEach((task, idx) => {
+                (cat.tasks || []).forEach(task => {
                     const checked = isTaskDone(activeOutletId, task.id);
                     tasksHtml += `
                         <div class="group flex items-start gap-3 p-3 rounded-2xl border transition-all ${
                             checked
                                 ? 'bg-emerald-50/60 border-emerald-200/80'
-                                : 'bg-slate-50/60 border-slate-200/70 hover:bg-white hover:border-emerald-300'
+                                : `bg-slate-50/60 border-slate-200/70 ${isViewer ? '' : 'hover:bg-white hover:border-emerald-300'}`
                         }">
-                            <button type="button" data-toggle-task="${task.id}"
-                                class="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                            <button type="button" ${isViewer ? 'disabled' : `data-toggle-task="${task.id}"`}
+                                class="mt-0.5 w-6 h-6 rounded-lg border-2 flex items-center justify-center shrink-0 transition-all ${
+                                    isViewer ? 'cursor-not-allowed opacity-85' : 'cursor-pointer'
+                                } ${
                                     checked
                                         ? 'bg-emerald-500 border-emerald-500 text-white shadow-xs'
-                                        : 'bg-white border-slate-300 hover:border-emerald-500'
+                                        : `bg-white border-slate-300 ${isViewer ? '' : 'hover:border-emerald-500'}`
                                 }"
-                                aria-label="Tandai tugas selesai">
+                                aria-label="Status tugas">
                                 ${checked ? `<svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>` : ''}
                             </button>
 
@@ -1679,7 +1459,9 @@
                                             checked ? 'line-through text-slate-400' : 'text-slate-800'
                                         }">
                                 ` : `
-                                    <div data-toggle-task="${task.id}" class="text-sm leading-snug font-medium cursor-pointer select-none ${
+                                    <div ${isViewer ? '' : `data-toggle-task="${task.id}"`} class="text-sm leading-snug font-medium select-none ${
+                                        isViewer ? 'cursor-default' : 'cursor-pointer'
+                                    } ${
                                         checked ? 'line-through text-slate-400' : 'text-slate-800'
                                     }">
                                         ${escapeHtml(task.text)}
@@ -1779,9 +1561,10 @@
         }
 
         function bindCategoryEvents() {
-            // Toggle centang tugas (Admin & Sub-Akun)
+            // Toggle centang tugas (Khusus Admin & Sub-Akun; terkunci untuk Pemantau)
             categoriesContainer.querySelectorAll('[data-toggle-task]').forEach(el => {
                 el.addEventListener('click', () => {
+                    if (currentRole === 'viewer') return;
                     const taskId = el.getAttribute('data-toggle-task');
                     const checks = getChecksForOutlet(activeOutletId);
                     checks[taskId] = !checks[taskId];
@@ -1790,103 +1573,97 @@
                 });
             });
 
-            // Collapse / Expand kategori
+            // Toggle buka/tutup kategori
             categoriesContainer.querySelectorAll('[data-toggle-collapse]').forEach(el => {
                 el.addEventListener('click', () => {
                     const catId = el.getAttribute('data-toggle-collapse');
-                    if (collapsedCategories.has(catId)) {
-                        collapsedCategories.delete(catId);
-                    } else {
-                        collapsedCategories.add(catId);
-                    }
+                    collapsedCategories[catId] = !collapsedCategories[catId];
                     renderCategoriesList();
                 });
             });
 
             if (currentRole !== 'admin') return;
 
-            // Edit nama kategori
+            // Edit nama kategori (Admin)
             categoriesContainer.querySelectorAll('[data-edit-cat-id]').forEach(input => {
-                input.addEventListener('input', () => {
+                input.addEventListener('change', () => {
                     const catId = input.getAttribute('data-edit-cat-id');
+                    const newName = input.value.trim();
                     const cat = masterData.categories.find(c => c.id === catId);
-                    if (cat) {
-                        cat.name = input.value;
-                        saveMasterConfig(false);
-                        renderCategoryFilterBar();
-                        renderWACategoryDropdown();
-                        renderWhatsAppPreview();
+                    if (cat && newName) {
+                        cat.name = newName;
+                        saveMasterConfig();
+                        renderAll();
                     }
                 });
             });
 
-            // Hapus kategori
+            // Hapus kategori (Admin)
             categoriesContainer.querySelectorAll('[data-delete-cat]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const catId = btn.getAttribute('data-delete-cat');
                     const cat = masterData.categories.find(c => c.id === catId);
                     if (!cat) return;
                     openConfirmModal(
-                        'Hapus Kategori?',
-                        `Kategori "${cat.name}" beserta seluruh tugas di dalamnya akan dihapus dari template master semua outlet.`,
+                        'Hapus Kategori',
+                        `Hapus kategori "${cat.name}" beserta seluruh item di dalamnya dari semua outlet?`,
                         () => {
                             masterData.categories = masterData.categories.filter(c => c.id !== catId);
                             if (activeCategoryFilter === catId) activeCategoryFilter = 'all';
-                            if (waSelectedCategory === catId) waSelectedCategory = 'all';
-                            saveMasterConfig(true);
+                            saveMasterConfig();
                             renderAll();
                             showToast('Kategori dihapus');
-                        }
+                        },
+                        'bg-rose-600 hover:bg-rose-700'
                     );
                 });
             });
 
-            // Edit teks tugas
+            // Edit teks tugas (Admin)
             categoriesContainer.querySelectorAll('[data-edit-task-id]').forEach(input => {
-                input.addEventListener('input', () => {
+                input.addEventListener('change', () => {
                     const catId = input.getAttribute('data-edit-task-cat');
                     const taskId = input.getAttribute('data-edit-task-id');
+                    const newText = input.value.trim();
                     const cat = masterData.categories.find(c => c.id === catId);
-                    const task = cat?.tasks.find(t => t.id === taskId);
-                    if (task) {
-                        task.text = input.value;
-                        saveMasterConfig(false);
+                    const task = cat?.tasks?.find(t => t.id === taskId);
+                    if (task && newText) {
+                        task.text = newText;
+                        saveMasterConfig();
                         renderWhatsAppPreview();
                     }
                 });
             });
 
-            // Hapus tugas
+            // Hapus tugas (Admin)
             categoriesContainer.querySelectorAll('[data-delete-task-id]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const catId = btn.getAttribute('data-delete-task-cat');
                     const taskId = btn.getAttribute('data-delete-task-id');
                     const cat = masterData.categories.find(c => c.id === catId);
-                    if (cat) {
-                        cat.tasks = cat.tasks.filter(t => t.id !== taskId);
-                        saveMasterConfig(true);
-                        renderAll();
-                        showToast('Item tugas dihapus');
-                    }
+                    if (!cat) return;
+                    cat.tasks = cat.tasks.filter(t => t.id !== taskId);
+                    saveMasterConfig();
+                    renderAll();
+                    showToast('Item tugas dihapus');
                 });
             });
 
-            // Tambah tugas baru dalam kategori
+            // Tambah tugas baru ke kategori (Admin)
             categoriesContainer.querySelectorAll('[data-add-task-form]').forEach(form => {
                 form.addEventListener('submit', (e) => {
                     e.preventDefault();
                     const catId = form.getAttribute('data-add-task-form');
                     const input = form.querySelector('input');
-                    const text = input.value.trim();
+                    const text = (input?.value || '').trim();
                     if (!text) return;
                     const cat = masterData.categories.find(c => c.id === catId);
                     if (cat) {
                         cat.tasks.push({
-                            id: 't_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+                            id: 't_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
                             text
                         });
-                        input.value = '';
-                        saveMasterConfig(true);
+                        saveMasterConfig();
                         renderAll();
                         showToast('Item tugas ditambahkan');
                     }
@@ -1894,186 +1671,107 @@
             });
         }
 
-        // =====================================================
-        // 8. GENERATOR & PRATINJAU PESAN WHATSAPP
-        // =====================================================
         function renderWACategoryDropdown() {
-            const prevVal = waSelectedCategory;
-            let options = '<option value="all">Semua Kategori</option>';
+            const currentVal = waCategoryFilter.value || 'all';
+            let optionsHtml = `<option value="all">Semua Kategori (${masterData.categories.length})</option>`;
             masterData.categories.forEach(cat => {
-                options += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
+                optionsHtml += `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`;
             });
-            waCategoryFilter.innerHTML = options;
-            if (prevVal === 'all' || masterData.categories.some(c => c.id === prevVal)) {
-                waCategoryFilter.value = prevVal;
+            waCategoryFilter.innerHTML = optionsHtml;
+            if ([...waCategoryFilter.options].some(o => o.value === currentVal)) {
+                waCategoryFilter.value = currentVal;
             } else {
-                waSelectedCategory = 'all';
                 waCategoryFilter.value = 'all';
             }
         }
 
         function generateWhatsAppText() {
             const outlet = getOutletById(activeOutletId);
-            const checker = getCheckerNameForOutlet(activeOutletId);
-            const targetCats = waSelectedCategory === 'all'
+            const checkerName = (outletCheckersMap[activeOutletId] || '').trim();
+            const selectedScope = waCategoryFilter.value || 'all';
+
+            const targetCategories = selectedScope === 'all'
                 ? masterData.categories
-                : masterData.categories.filter(c => c.id === waSelectedCategory);
+                : masterData.categories.filter(c => c.id === selectedScope);
 
             let totalTasks = 0;
-            let totalDone = 0;
-            targetCats.forEach(cat => {
-                const st = getCategoryStats(activeOutletId, cat);
-                totalTasks += st.total;
-                totalDone += st.done;
+            let doneTasks = 0;
+            targetCategories.forEach(cat => {
+                (cat.tasks || []).forEach(task => {
+                    totalTasks++;
+                    if (isTaskDone(activeOutletId, task.id)) doneTasks++;
+                });
             });
-            const overallPercent = totalTasks > 0 ? Math.round((totalDone / totalTasks) * 100) : 0;
-            const mainBar = buildGreenEmojiBar(totalDone, totalTasks, masterData.waBarScale);
+            const percent = totalTasks === 0 ? 0 : Math.round((doneTasks / totalTasks) * 100);
+            const greenBar = buildGreenTabString(doneTasks, totalTasks);
 
             const lines = [];
-            lines.push(`*${(masterData.title || 'CEKLIS OPERASIONAL OUTLET MOMOYO').toUpperCase()}*`);
+            lines.push(`*${(masterData.title || 'CEKLIS OPERASIONAL OUTLET').toUpperCase()}*`);
             if (outlet) {
                 lines.push(`🏪 *${outlet.name}*`);
             }
-            if (checker) {
-                lines.push(`👤 Checker: *${checker}*`);
+            if (checkerName) {
+                lines.push(`👤 Checker: *${checkerName}*`);
             }
             if (masterData.showDate) {
-                lines.push(`📅 ${getFormattedDateID()}`);
+                lines.push(`📅 ${formatIndonesianDate()}`);
             }
-
             lines.push('');
-            lines.push(`Progres: ${mainBar} *${overallPercent}%* (${totalDone}/${totalTasks})`);
+            lines.push(`Progres: ${greenBar} *${percent}%* (${doneTasks}/${totalTasks})`);
+            lines.push('');
 
-            targetCats.forEach(cat => {
-                const catStats = getCategoryStats(activeOutletId, cat);
-                lines.push('');
-                lines.push(`*${cat.name}* (${catStats.done}/${catStats.total})`);
+            targetCategories.forEach(cat => {
+                const cStats = getCategoryStats(activeOutletId, cat);
+                lines.push(`*${cat.name}*`);
                 if (masterData.showCategoryBarsInWA) {
-                    const catBar = buildGreenEmojiBar(catStats.done, catStats.total, masterData.waBarScale);
-                    lines.push(`${catBar} ${catStats.percent}%`);
+                    const catBar = buildGreenTabString(cStats.done, cStats.total);
+                    lines.push(`${catBar} ${cStats.percent}% (${cStats.done}/${cStats.total})`);
                 }
                 (cat.tasks || []).forEach(task => {
                     const done = isTaskDone(activeOutletId, task.id);
                     const icon = done ? '✅' : '⬜';
-                    const taskLabel = (done && masterData.strikethrough) ? `~${task.text}~` : task.text;
-                    lines.push(`${icon} ${taskLabel}`);
+                    const formattedText = (done && masterData.strikethrough)
+                        ? `~${task.text}~`
+                        : task.text;
+                    lines.push(`${icon} ${formattedText}`);
                 });
+                lines.push('');
             });
 
             if (masterData.footer && masterData.footer.trim()) {
-                lines.push('');
                 lines.push(`_${masterData.footer.trim()}_`);
             }
 
             return {
-                text: lines.join('\n'),
-                percent: overallPercent
+                text: lines.join('\n').trim(),
+                percent
             };
-        }
-
-        function formatWhatsAppPreviewHtml(rawText) {
-            let safe = escapeHtml(rawText);
-            // Format *bold*, _italic_, ~strikethrough~ khas WhatsApp
-            safe = safe.replace(/\*([^\*\n]+)\*/g, '<strong class="font-bold">$1</strong>');
-            safe = safe.replace(/_([^_\n]+)_/g, '<em class="italic">$1</em>');
-            safe = safe.replace(/~([^~\n]+)~/g, '<del class="line-through text-slate-500">$1</del>');
-            return safe;
         }
 
         function renderWhatsAppPreview() {
             const outlet = getOutletById(activeOutletId);
-            const result = generateWhatsAppText();
-            waPreviewContent.innerHTML = formatWhatsAppPreviewHtml(result.text);
-            previewPercentBadge.textContent = `${result.percent}%`;
-            previewOutletSub.textContent = `${outlet ? outlet.name : 'Outlet MOMOYO'} • Tab Hijau 🟩`;
-            previewTime.textContent = getCurrentTimeHM();
+            const { text, percent } = generateWhatsAppText();
+            previewOutletSub.textContent = `${outlet ? outlet.name : 'MOMOYO'} • Tab Hijau 🟩`;
+            previewPercentBadge.textContent = `${percent}%`;
+            waPreviewContent.textContent = text;
         }
 
         // =====================================================
-        // 9. SALIN PESAN & KIRIM KE WHATSAPP
-        // =====================================================
-        function copyWhatsAppMessage() {
-            const { text } = generateWhatsAppText();
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.focus();
-            textarea.select();
-            try {
-                document.execCommand('copy');
-                showToast('Pesan WhatsApp berhasil disalin!');
-            } catch (err) {
-                showToast('Gagal menyalin pesan.');
-            }
-            document.body.removeChild(textarea);
-        }
-
-        function sendToWhatsApp() {
-            const { text } = generateWhatsAppText();
-            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-            window.open(url, '_blank', 'noopener,noreferrer');
-        }
-
-        // =====================================================
-        // 10. MODAL PENGATURAN, RESET HARIAN & KONFIRMASI
+        // 8. MODAL PENGATURAN & RESET (ADMINISTRATOR)
         // =====================================================
         function openSettingsModal() {
             if (currentRole !== 'admin') return;
             settingsErrorMsg.classList.add('hidden');
             inputAdminPin.value = masterData.adminPin || '1234';
             inputAdminPin.type = 'password';
+            inputViewerPin.value = masterData.viewerPin || '202611';
+            inputViewerPin.type = 'password';
             settingAutoDate.checked = !!masterData.showDate;
             settingStrikethrough.checked = !!masterData.strikethrough;
             settingCategoryBars.checked = !!masterData.showCategoryBarsInWA;
             tempWaBarScale = masterData.waBarScale || '10';
-            updateWaScaleButtons();
-
-            // Isi kotak konfigurasi server jika sudah tersimpan sebelumnya
-            cloudConfigFeedback.classList.add('hidden');
-            const resolved = resolveCloudConfig();
-            if (resolved.config && resolved.isExternal) {
-                inputCloudConfigJson.value = JSON.stringify(resolved.config, null, 2);
-            } else {
-                inputCloudConfigJson.value = '';
-            }
-            const isOnlineAny = useCloudSync || useBuiltinRealtime;
-            updateSyncStatusUI(isOnlineAny, isOnlineAny ? 'Terhubung ke server real-time' : 'Mode Lokal');
-
-            // Render input Nama & PIN untuk 5 outlet
-            let listHtml = '';
-            masterData.outlets.forEach((outlet, idx) => {
-                listHtml += `
-                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-slate-50 border border-slate-200 rounded-2xl p-2.5">
-                        <div class="sm:col-span-8">
-                            <input type="text" data-setting-outlet-name="${outlet.id}" value="${escapeHtml(outlet.name)}" required
-                                placeholder="Nama Outlet ${idx + 1}"
-                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
-                        </div>
-                        <div class="sm:col-span-4 relative flex items-center">
-                            <input type="password" data-setting-outlet-pin="${outlet.id}" value="${escapeHtml(outlet.pin)}" inputmode="numeric" maxlength="10" required
-                                placeholder="PIN"
-                                class="w-full pl-3 pr-9 py-2 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
-                            <button type="button" data-toggle-pin-vis="${outlet.id}" class="absolute right-2 p-1 text-slate-400 hover:text-slate-700 cursor-pointer" title="Tampilkan / Sembunyikan PIN">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            });
-            settingsOutletsList.innerHTML = listHtml;
-
-            settingsOutletsList.querySelectorAll('[data-toggle-pin-vis]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const oId = btn.getAttribute('data-toggle-pin-vis');
-                    const inp = settingsOutletsList.querySelector(`[data-setting-outlet-pin="${oId}"]`);
-                    if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
-                });
-            });
+            updateWaScaleButtonsUI();
+            renderSettingsOutletsList();
 
             settingsModal.classList.remove('hidden');
             settingsModal.classList.add('flex');
@@ -2084,15 +1782,52 @@
             settingsModal.classList.remove('flex');
         }
 
-        function updateWaScaleButtons() {
+        function renderSettingsOutletsList() {
+            let html = '';
+            masterData.outlets.forEach((outlet, index) => {
+                html += `
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                        <div class="sm:col-span-8">
+                            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">Nama Outlet #${index + 1}</label>
+                            <input type="text" data-setting-outlet-name="${outlet.id}" value="${escapeHtml(outlet.name)}"
+                                class="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
+                        </div>
+                        <div class="sm:col-span-4">
+                            <label class="block text-[10px] font-bold uppercase text-slate-400 mb-1">PIN Akses</label>
+                            <div class="relative flex items-center">
+                                <input type="password" inputmode="numeric" maxlength="10" data-setting-outlet-pin="${outlet.id}" value="${escapeHtml(outlet.pin)}"
+                                    class="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-wa-primary/40">
+                                <button type="button" data-toggle-outlet-pin="${outlet.id}" class="absolute right-2 text-slate-400 hover:text-slate-700 cursor-pointer" title="Lihat PIN">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            settingsOutletsList.innerHTML = html;
+
+            settingsOutletsList.querySelectorAll('[data-toggle-outlet-pin]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const oid = btn.getAttribute('data-toggle-outlet-pin');
+                    const pinInput = settingsOutletsList.querySelector(`[data-setting-outlet-pin="${oid}"]`);
+                    if (pinInput) {
+                        pinInput.type = pinInput.type === 'password' ? 'text' : 'password';
+                    }
+                });
+            });
+        }
+
+        function updateWaScaleButtonsUI() {
             document.querySelectorAll('.wa-scale-btn').forEach(btn => {
-                const val = btn.getAttribute('data-wa-scale');
-                if (val === tempWaBarScale) {
-                    btn.classList.add('border-wa-primary', 'bg-emerald-50/70');
-                    btn.classList.remove('border-slate-200', 'bg-white');
+                const scale = btn.getAttribute('data-wa-scale');
+                if (scale === tempWaBarScale) {
+                    btn.className = 'wa-scale-btn p-3 rounded-xl border-2 border-emerald-500 bg-emerald-50/70 text-left transition-all cursor-pointer';
                 } else {
-                    btn.classList.remove('border-wa-primary', 'bg-emerald-50/70');
-                    btn.classList.add('border-slate-200', 'bg-white');
+                    btn.className = 'wa-scale-btn p-3 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 text-left transition-all cursor-pointer';
                 }
             });
         }
@@ -2102,13 +1837,24 @@
             settingsErrorMsg.classList.add('hidden');
 
             const newAdminPin = inputAdminPin.value.trim();
+            const newViewerPin = inputViewerPin.value.trim();
             if (newAdminPin.length < 4) {
                 settingsErrorMsg.textContent = 'PIN Administrator minimal 4 karakter.';
                 settingsErrorMsg.classList.remove('hidden');
                 return;
             }
+            if (newViewerPin.length < 4) {
+                settingsErrorMsg.textContent = 'PIN Pemantau (View-Only) minimal 4 karakter.';
+                settingsErrorMsg.classList.remove('hidden');
+                return;
+            }
+            if (newAdminPin === newViewerPin) {
+                settingsErrorMsg.textContent = 'PIN Administrator dan PIN Pemantau tidak boleh sama.';
+                settingsErrorMsg.classList.remove('hidden');
+                return;
+            }
 
-            const pinSet = new Set([newAdminPin]);
+            const pinSet = new Set([newAdminPin, newViewerPin]);
             const updatedOutlets = [];
 
             for (const outlet of masterData.outlets) {
@@ -2137,19 +1883,21 @@
             }
 
             masterData.adminPin = newAdminPin;
+            masterData.viewerPin = newViewerPin;
             masterData.outlets = updatedOutlets;
             masterData.waBarScale = tempWaBarScale;
             masterData.showDate = settingAutoDate.checked;
             masterData.strikethrough = settingStrikethrough.checked;
             masterData.showCategoryBarsInWA = settingCategoryBars.checked;
 
-            saveMasterConfig(true);
+            saveMasterConfig();
             closeSettingsModal();
             renderAll();
             showToast('Pengaturan berhasil disimpan!');
         }
 
         function openResetMenuModal() {
+            if (currentRole !== 'admin') return;
             const outlet = getOutletById(activeOutletId);
             lblMenuResetCurrent.textContent = `Reset ${outlet ? outlet.name : 'Outlet Terpilih'}`;
             resetMenuModal.classList.remove('hidden');
@@ -2161,306 +1909,208 @@
             resetMenuModal.classList.remove('flex');
         }
 
-        function openConfirmModal(title, message, onProceed) {
-            confirmModalTitle.textContent = title;
-            confirmModalMessage.textContent = message;
-            pendingConfirmAction = onProceed;
-            confirmModal.classList.remove('hidden');
-            confirmModal.classList.add('flex');
-        }
-
-        function closeConfirmModal() {
-            confirmModal.classList.add('hidden');
-            confirmModal.classList.remove('flex');
-            pendingConfirmAction = null;
-        }
-
-        async function resetOutletData(outletId) {
-            outletChecksMap[outletId] = {};
-            outletCheckersMap[outletId] = '';
-            await saveOutletProgress(outletId);
-            renderAll();
+        function resetOutletChecks(outletId) {
             const outlet = getOutletById(outletId);
-            showToast(`Progres ${outlet ? outlet.name : 'outlet'} direset ke 0%`);
+            openConfirmModal(
+                'Reset Progres Outlet',
+                `Kosongkan seluruh status centang dan Nama Checker untuk ${outlet ? outlet.name : 'outlet ini'}?`,
+                () => {
+                    outletChecksMap[outletId] = {};
+                    outletCheckersMap[outletId] = '';
+                    saveOutletProgress(outletId);
+                    renderAll();
+                    showToast(`Progres ${outlet ? outlet.name : 'outlet'} berhasil direset`);
+                }
+            );
         }
 
-        async function resetAllOutletsData() {
-            for (const outlet of masterData.outlets) {
-                outletChecksMap[outlet.id] = {};
-                outletCheckersMap[outlet.id] = '';
-                await saveOutletProgress(outlet.id);
-            }
-            renderAll();
-            showToast('Semua 5 outlet berhasil direset ke 0%');
+        function resetAllOutletsChecks() {
+            openConfirmModal(
+                'Reset Semua 5 Outlet',
+                'Kosongkan seluruh status centang dan Nama Checker untuk SEMUA 5 outlet MOMOYO ke 0%?',
+                () => {
+                    masterData.outlets.forEach(o => {
+                        outletChecksMap[o.id] = {};
+                        outletCheckersMap[o.id] = '';
+                        saveOutletProgress(o.id);
+                    });
+                    renderAll();
+                    showToast('Seluruh 5 outlet berhasil direset ke 0%');
+                },
+                'bg-rose-600 hover:bg-rose-700'
+            );
+        }
+
+        function restoreDefaultMasterTemplate() {
+            openConfirmModal(
+                'Kembalikan Template Bawaan',
+                'Kembalikan 4 kategori & 40 item operasional MOMOYO ke daftar bawaan? Nama outlet & PIN tidak akan berubah.',
+                () => {
+                    masterData.title = 'CEKLIS OPERASIONAL OUTLET MOMOYO';
+                    masterData.footer = '';
+                    masterData.categories = createDefaultCategories();
+                    activeCategoryFilter = 'all';
+                    saveMasterConfig();
+                    closeSettingsModal();
+                    renderAll();
+                    showToast('Template 4 kategori & 40 item dipulihkan');
+                },
+                'bg-rose-600 hover:bg-rose-700'
+            );
         }
 
         // =====================================================
-        // 11. REGISTRASI EVENT LISTENERS
+        // 9. EVENT LISTENERS GLOBAL
         // =====================================================
-        loginForm.addEventListener('submit', handleLoginSubmit);
-        btnLogout.addEventListener('click', handleLogout);
+        btnLogout.addEventListener('click', logoutApp);
 
-        // Input Nama Checker (auto-save debounced per outlet)
-        inputCheckerName.addEventListener('input', () => {
-            const val = inputCheckerName.value;
-            outletCheckersMap[activeOutletId] = val;
-            checkerSaveStatus.textContent = 'Menyimpan...';
-            renderWhatsAppPreview();
-            if (currentRole === 'admin') renderAdminOutletsOverview();
-
-            if (saveCheckerTimer) clearTimeout(saveCheckerTimer);
-            saveCheckerTimer = setTimeout(async () => {
-                await saveOutletProgress(activeOutletId);
-                checkerSaveStatus.textContent = 'Tersimpan otomatis';
-            }, 400);
-        });
-
-        // Edit Judul & Footer Master (Khusus Admin)
-        inputTitle.addEventListener('input', () => {
-            if (currentRole !== 'admin') return;
-            masterData.title = inputTitle.value;
-            saveMasterConfig(false);
-            renderStickyHeaderProgress();
-            renderWhatsAppPreview();
-        });
-
-        inputFooter.addEventListener('input', () => {
-            if (currentRole !== 'admin') return;
-            masterData.footer = inputFooter.value;
-            saveMasterConfig(false);
-            renderWhatsAppPreview();
-        });
-
-        // Tambah Kategori Baru (Khusus Admin)
-        formAddCategory.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (currentRole !== 'admin') return;
-            const name = inputNewCategory.value.trim();
-            if (!name) return;
-            masterData.categories.push({
-                id: 'cat_' + Date.now(),
-                name,
-                tasks: []
-            });
-            inputNewCategory.value = '';
-            saveMasterConfig(true);
-            renderAll();
-            showToast('Kategori baru ditambahkan');
-        });
-
-        // Buka / Tutup Semua Accordion
-        btnExpandAll.addEventListener('click', () => {
-            collapsedCategories.clear();
-            renderCategoriesList();
-        });
-
-        btnCollapseAll.addEventListener('click', () => {
-            masterData.categories.forEach(c => collapsedCategories.add(c.id));
-            renderCategoriesList();
-        });
-
-        // Dropdown Filter Kirim WA
-        waCategoryFilter.addEventListener('change', () => {
-            waSelectedCategory = waCategoryFilter.value;
-            renderWhatsAppPreview();
-        });
-
-        // Tombol Salin & Kirim WA
-        btnCopyText.addEventListener('click', copyWhatsAppMessage);
-        btnSendWA.addEventListener('click', sendToWhatsApp);
-
-        // Tombol Reset di Dashboard Admin & Header
         btnHeaderResetMenu.addEventListener('click', openResetMenuModal);
         btnCloseResetMenu.addEventListener('click', closeResetMenuModal);
-
         btnMenuResetCurrent.addEventListener('click', () => {
             closeResetMenuModal();
-            const outlet = getOutletById(activeOutletId);
-            openConfirmModal(
-                'Reset Centang Outlet?',
-                `Semua centang dan Nama Checker pada "${outlet ? outlet.name : 'outlet ini'}" akan dikosongkan ke 0%.`,
-                () => resetOutletData(activeOutletId)
-            );
+            resetOutletChecks(activeOutletId);
         });
-
         btnMenuResetAll.addEventListener('click', () => {
             closeResetMenuModal();
-            openConfirmModal(
-                'Reset Semua 5 Outlet?',
-                'Seluruh status centang dan Nama Checker untuk kelima outlet MOMOYO akan dikosongkan ke 0%.',
-                () => resetAllOutletsData()
-            );
+            resetAllOutletsChecks();
         });
 
-        btnResetSelectedOutlet.addEventListener('click', () => {
-            const outlet = getOutletById(activeOutletId);
-            openConfirmModal(
-                'Reset Centang Outlet?',
-                `Semua centang dan Nama Checker pada "${outlet ? outlet.name : 'outlet ini'}" akan dikosongkan ke 0%.`,
-                () => resetOutletData(activeOutletId)
-            );
-        });
+        btnResetSelectedOutlet.addEventListener('click', () => resetOutletChecks(activeOutletId));
+        btnResetAllOutlets.addEventListener('click', resetAllOutletsChecks);
 
-        btnResetAllOutlets.addEventListener('click', () => {
-            openConfirmModal(
-                'Reset Semua 5 Outlet?',
-                'Seluruh status centang dan Nama Checker untuk kelima outlet MOMOYO akan dikosongkan ke 0%.',
-                () => resetAllOutletsData()
-            );
-        });
-
-        // Modal Pengaturan Admin
         btnOpenSettings.addEventListener('click', openSettingsModal);
         btnCloseSettings.addEventListener('click', closeSettingsModal);
         btnCancelSettings.addEventListener('click', closeSettingsModal);
         settingsForm.addEventListener('submit', handleSaveSettings);
+        btnModalRestoreDefaults.addEventListener('click', restoreDefaultMasterTemplate);
 
         btnToggleAdminPin.addEventListener('click', () => {
             inputAdminPin.type = inputAdminPin.type === 'password' ? 'text' : 'password';
         });
 
+        btnToggleViewerPin.addEventListener('click', () => {
+            inputViewerPin.type = inputViewerPin.type === 'password' ? 'text' : 'password';
+        });
+
         document.querySelectorAll('.wa-scale-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 tempWaBarScale = btn.getAttribute('data-wa-scale');
-                updateWaScaleButtons();
+                updateWaScaleButtonsUI();
             });
         });
 
-        btnModalRestoreDefaults.addEventListener('click', () => {
-            openConfirmModal(
-                'Kembalikan Template Bawaan?',
-                'Daftar kategori dan 40 item ceklis akan dikembalikan ke versi standar awal (PAGI, MIDDLE, PELAPORAN, CLOSING).',
-                () => {
-                    masterData.categories = createDefaultCategories();
-                    activeCategoryFilter = 'all';
-                    waSelectedCategory = 'all';
-                    saveMasterConfig(true);
-                    closeSettingsModal();
-                    renderAll();
-                    showToast('Template 4 kategori & 40 item dikembalikan');
-                }
-            );
-        });
-
-        // Aksi Koneksi Server Real-Time untuk GitHub Pages
-        function showCloudFeedback(msg, isError = false) {
-            cloudConfigFeedback.textContent = msg;
-            cloudConfigFeedback.className = `text-xs font-semibold mt-1.5 ${isError ? 'text-rose-600' : 'text-emerald-700'}`;
-            cloudConfigFeedback.classList.remove('hidden');
-        }
-
-        btnSaveCloudConfig.addEventListener('click', async () => {
-            const parsed = parseCloudConfigInput(inputCloudConfigJson.value);
-            if (!parsed) {
-                showCloudFeedback('Format tidak valid. Pastikan terdapat apiKey dan projectId.', true);
-                return;
-            }
-            localStorage.setItem(LOCAL_CLOUD_CFG_KEY, JSON.stringify(parsed));
-            inputCloudConfigJson.value = JSON.stringify(parsed, null, 2);
-            showCloudFeedback('Menghubungkan ke server real-time...', false);
-            await initFirebase();
-            if (useCloudSync) {
-                showCloudFeedback('Berhasil terhubung! Semua perangkat akan saling tersinkronisasi.', false);
-                showToast('Server Real-Time terhubung!');
-            } else {
-                showCloudFeedback('Config tersimpan, namun koneksi gagal. Periksa aturan akses database.', true);
-            }
-        });
-
-        btnDownloadGitHubHtml.addEventListener('click', () => {
-            const parsed = parseCloudConfigInput(inputCloudConfigJson.value) || resolveCloudConfig().config;
-            if (!parsed) {
-                showCloudFeedback('Tempel konfigurasi server terlebih dahulu sebelum mengunduh file.', true);
-                return;
-            }
-
-            const clonedDoc = document.documentElement.cloneNode(true);
-            const cLogin = clonedDoc.querySelector('#loginScreen');
-            const cApp = clonedDoc.querySelector('#appScreen');
-            const cSettings = clonedDoc.querySelector('#settingsModal');
-            if (cLogin) cLogin.classList.remove('hidden');
-            if (cApp) cApp.classList.add('hidden');
-            if (cSettings) {
-                cSettings.classList.add('hidden');
-                cSettings.classList.remove('flex');
-            }
-
-            ['#categoriesContainer', '#outletSwitcherGrid', '#waPreviewContent', '#settingsOutletsList', '#categoryFilterBar', '#mainGreenTabsContainer'].forEach(sel => {
-                const el = clonedDoc.querySelector(sel);
-                if (el) el.innerHTML = '';
-            });
-
-            let htmlStr = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
-            htmlStr = htmlStr.replace(
-                /\/\* __CLOUD_CONFIG_START__ \*\/[\s\S]*?\/\* __CLOUD_CONFIG_END__ \*\//,
-                `/* __CLOUD_CONFIG_START__ */\n        const EMBEDDED_CLOUD_CONFIG = ${JSON.stringify(parsed)};\n        /* __CLOUD_CONFIG_END__ */`
-            );
-
-            const blob = new Blob([htmlStr], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'index.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast('File index.html siap upload ke GitHub berhasil diunduh!');
-        });
-
-        btnCopyOutletShareLink.addEventListener('click', () => {
-            const parsed = parseCloudConfigInput(inputCloudConfigJson.value) || resolveCloudConfig().config;
-            if (!parsed) {
-                showCloudFeedback('Tempel konfigurasi server terlebih dahulu untuk membuat link.', true);
-                return;
-            }
-            const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(parsed))))
-                .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-            const baseUrl = window.location.origin + window.location.pathname;
-            const shareUrl = `${baseUrl}#cfg=${encoded}`;
-
-            const ta = document.createElement('textarea');
-            ta.value = shareUrl;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.select();
-            document.execCommand('copy');
-            document.body.removeChild(ta);
-            showToast('Link terhubung untuk 5 outlet berhasil disalin!');
-        });
-
-        btnClearCloudConfig.addEventListener('click', async () => {
-            localStorage.removeItem(LOCAL_CLOUD_CFG_KEY);
-            inputCloudConfigJson.value = '';
-            await initFirebase();
-            showCloudFeedback('Koneksi server kustom direset.', false);
-            showToast('Koneksi server direset');
-        });
-
-        // Modal Konfirmasi Universal
         btnConfirmCancel.addEventListener('click', closeConfirmModal);
         btnConfirmProceed.addEventListener('click', () => {
-            const action = pendingConfirmAction;
+            const cb = confirmCallback;
             closeConfirmModal();
-            if (typeof action === 'function') action();
+            if (typeof cb === 'function') cb();
         });
 
-        // Klik di luar modal untuk menutup
-        [settingsModal, resetMenuModal, confirmModal].forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }
+        // Input Nama Checker (auto-save debounced per outlet, terkunci untuk Pemantau)
+        inputCheckerName.addEventListener('input', () => {
+            if (currentRole === 'viewer') return;
+            const val = inputCheckerName.value;
+            outletCheckersMap[activeOutletId] = val;
+            checkerSaveStatus.textContent = 'Menyimpan...';
+            renderWhatsAppPreview();
+            if (currentRole === 'admin') {
+                renderAdminOutletsOverview();
+            }
+
+            clearTimeout(checkerSaveTimer);
+            checkerSaveTimer = setTimeout(() => {
+                saveOutletProgress(activeOutletId);
+                checkerSaveStatus.textContent = 'Tersimpan otomatis';
+            }, 400);
+        });
+
+        // Input Judul & Footer Master (Khusus Admin)
+        inputTitle.addEventListener('input', () => {
+            if (currentRole !== 'admin') return;
+            masterData.title = inputTitle.value;
+            visualTitleHeading.textContent = masterData.title || 'CEKLIS OPERASIONAL OUTLET MOMOYO';
+            renderWhatsAppPreview();
+            clearTimeout(masterSaveTimer);
+            masterSaveTimer = setTimeout(() => saveMasterConfig(), 450);
+        });
+
+        inputFooter.addEventListener('input', () => {
+            if (currentRole !== 'admin') return;
+            masterData.footer = inputFooter.value;
+            renderWhatsAppPreview();
+            clearTimeout(masterSaveTimer);
+            masterSaveTimer = setTimeout(() => saveMasterConfig(), 450);
+        });
+
+        // Form Tambah Kategori Baru (Khusus Admin)
+        formAddCategory.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (currentRole !== 'admin') return;
+            const catName = inputNewCategory.value.trim();
+            if (!catName) return;
+
+            masterData.categories.push({
+                id: 'cat_' + Date.now(),
+                name: catName.toUpperCase(),
+                tasks: []
             });
+            inputNewCategory.value = '';
+            saveMasterConfig();
+            renderAll();
+            showToast(`Kategori "${catName.toUpperCase()}" ditambahkan`);
+        });
+
+        // Buka / Tutup Semua Accordion
+        btnExpandAll.addEventListener('click', () => {
+            collapsedCategories = {};
+            renderCategoriesList();
+        });
+
+        btnCollapseAll.addEventListener('click', () => {
+            masterData.categories.forEach(c => {
+                collapsedCategories[c.id] = true;
+            });
+            renderCategoriesList();
+        });
+
+        // Filter Laporan WhatsApp
+        waCategoryFilter.addEventListener('change', renderWhatsAppPreview);
+
+        // Salin Pesan WhatsApp
+        btnCopyText.addEventListener('click', () => {
+            const { text } = generateWhatsAppText();
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Pesan WhatsApp berhasil disalin!');
+            } catch (err) {
+                showToast('Gagal menyalin pesan');
+            }
+            document.body.removeChild(textarea);
+        });
+
+        // Kirim Langsung ke WhatsApp
+        btnSendWA.addEventListener('click', () => {
+            const { text } = generateWhatsAppText();
+            const encoded = encodeURIComponent(text);
+            window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank', 'noopener,noreferrer');
         });
 
         // =====================================================
-        // 12. MULAI APLIKASI
+        // 10. INISIALISASI SAAT HALAMAN DIMUAT
         // =====================================================
-        initFirebase();
-        setTimeout(() => loginPinInput.focus(), 150);
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocalStorage();
+            updateClock();
+            setInterval(updateClock, 30000);
+            initRealtimeSync();
+            loginPinInput.focus();
+        });
     </script>
 </body>
 </html>
